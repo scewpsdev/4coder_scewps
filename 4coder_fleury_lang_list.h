@@ -6,9 +6,12 @@
 // NOTE(rjf): Include language files here.
 #include "generated/4coder_fleury_lexer_jai.h"
 #include "generated/4coder_fleury_lexer_jai.cpp"
+#include "generated/4coder_fleury_lexer_snek.h"
+#include "generated/4coder_fleury_lexer_snek.cpp"
 #include "4coder_fleury_lang_cpp.cpp"
 #include "4coder_fleury_lang_jai.cpp"
 #include "4coder_fleury_lang_metadesk.cpp"
+#include "4coder_fleury_lang_snek.cpp"
 
 // NOTE(rjf): @f4_register_languages Register languages.
 function void
@@ -19,7 +22,7 @@ F4_RegisterLanguages(void)
         String_Const_u8 extensions[] =
         {
             S8Lit("cpp"), S8Lit("cc"), S8Lit("c"), S8Lit("cxx"),
-            S8Lit("C"), S8Lit("h"), S8Lit("hpp"),
+            S8Lit("C"), S8Lit("h"), S8Lit("hpp")
         };
         for(int i = 0; i < ArrayCount(extensions); i += 1)
         {
@@ -61,6 +64,24 @@ F4_RegisterLanguages(void)
                                 F4_MD_PosContext,
                                 F4_MD_Highlight,
                                 Lex_State_Cpp);
+        }
+    }
+
+    // SnekLang
+    {
+        String_Const_u8 extensions[] =
+        {
+            S8Lit("src"), S8Lit("snek"),
+        };
+        for (int i = 0; i < ArrayCount(extensions); i++)
+        {
+            F4_RegisterLanguage(extensions[i],
+                                Snek_IndexFile,
+                                lex_full_input_snek_init,
+                                lex_full_input_snek_breaks,
+                                Snek_PosContext,
+                                Snek_Highlight,
+                                Lex_State_Snek);
         }
     }
 }
