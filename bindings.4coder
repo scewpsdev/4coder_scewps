@@ -185,7 +185,7 @@ keys_code =
     { "f4_uncomment_selection",     "Semicolon", "Control", "Shift", },
     { "f4_autocomplete_or_indent",  "Tab" },
     { "f4_unindent",                "Tab", "Shift" },
-    { "word_complete_drop_down",    "Tab", "Shift", "Control" },
+    { "word_complete_drop_down",    ".", "Control" },
     { "write_block",                "R", "Alt" },
     { "write_todo",                 "T", "Alt" },
     { "write_note",                 "Y", "Alt" },
