@@ -21,8 +21,8 @@ keys_global =
     { "f4_interactive_open_or_new_in_project",    "O",      "Alt"                      },
     { "f4_open_project",                          "O",      "Control", "Shift"         },
     { "interactive_kill_buffer",                  "K",      "Control"                  },
-    { "interactive_switch_buffer",                "I",      "Control"                  },
-    { "save_all_dirty_buffers",                   "S",      "Control", "Shift"         },
+    { "interactive_switch_buffer",                "Tab",    "Control"                  },
+    { "save_all_dirty_buffers",                   "S",    "Control", "Shift"                },
     { "f4_recent_files_menu",                     "V",      "Alt"                      },
     
     // NOTE(rjf): Jump Lists
@@ -33,11 +33,11 @@ keys_global =
     // NOTE(rjf): Commands
     { "execute_any_cli",                          "Z",      "Alt"                      },
     { "execute_previous_cli",                     "Z",      "Alt",     "Shift"         },
-    { "command_lister",                           "X",      "Alt"                      },
+    { "command_lister",                           "P",      "Control", "Shift"         },
     
     // NOTE(rjf): Project
-    { "build_in_build_panel",                     "M",      "Alt"                      },
-    { "project_command_lister",                   "X",      "Alt",     "Shift"         },
+    { "build_in_build_panel",                     "B",      "Control"                      },
+    { "project_command_lister",                   "P",      "Control", "Alt",     "Shift"         },
     { "project_fkey_command",                     "F1", "Control"                      },
     { "project_fkey_command",                     "F2", "Control"                      },
     { "project_fkey_command",                     "F3", "Control"                      },
@@ -56,12 +56,12 @@ keys_global =
     { "project_fkey_command",                     "F16", "Control"                     },
     
     // NOTE(rjf): Panels
-    { "open_panel_vsplit", "P", "Control" },
-    { "open_panel_hsplit", "Minus", "Control" },
-    { "close_panel", "P", "Control", "Shift" },
-    { "f4_search_for_definition__project_wide", "J", "Control" },
-    { "f4_search_for_definition__current_file", "J", "Control", "Shift" },
-    { "jump_to_last_point", "J", "Alt" },
+    //{ "open_panel_vsplit", "P", "Control" },
+    //{ "open_panel_hsplit", "Minus", "Control" },
+    //{ "close_panel", "P", "Control", "Shift" },
+    //{ "f4_search_for_definition__project_wide", "J", "Control" },
+    //{ "f4_search_for_definition__current_file", "J", "Control", "Shift" },
+    //{ "jump_to_last_point", "J", "Alt" },
     
 };
 
@@ -134,14 +134,14 @@ keys_file =
     { "cut",                         "X", "Control" },
     
     // NOTE(rjf): Lego
-    { "f4_lego_buffer_place",        "F1", },
-    { "f4_lego_buffer_place",        "F2", },
-    { "f4_lego_buffer_place",        "F3", },
-    { "f4_lego_buffer_place",        "F4", },
+    // { "f4_lego_buffer_place",        "F1", },
+    // { "f4_lego_buffer_place",        "F2", },
+    // { "f4_lego_buffer_place",        "F3", },
+    // { "f4_lego_buffer_place",        "F4", },
     
     // NOTE(rjf): Deletion
-    { "delete_range",                "D", "Control" },
-    { "delete_line",                 "D", "Control", "Shift" },
+    { "delete_range",                "D", "Control", "Shift" },
+    { "delete_line",                 "D", "Control" },
     
     // NOTE(rjf): Insertion
     { "duplicate_line",              "L", "Control" },
@@ -151,7 +151,7 @@ keys_file =
     { "left_adjust_view",            "E", "Control", "Shift" },
     
     // NOTE(rjf): File
-    { "kill_buffer",                 "K", "Control", "Shift" },
+    { "kill_buffer",                 "W", "Control" },
     { "reopen",                      "O", "Alt", "Shift" },
     { "save",                        "S", "Control" },
     { "save_all_dirty_buffers",      "S", "Control", "Shift" },
@@ -167,12 +167,12 @@ keys_file =
     
     // NOTE(rjf): Code Peek
     { "f4_code_peek",          "Tick",  "Alt" },
-    { "f4_code_peek_yank",     "Tab", "Control" },
+    //{ "f4_code_peek_yank",     "Tab", "Control" },
     { "f4_code_peek_clear",    "Shift", "Alt" },
     
     // NOTE(rjf): Go To Def
-    { "f4_go_to_definition",   "Return", "Control" },
-    { "f4_go_to_definition_same_panel", "Return", "Control", "Shift" },
+    { "f4_go_to_definition",   "F12", "Control" },
+    { "f4_go_to_definition_same_panel", "F12" },
     
     // NOTE(rjf): Helpers
     { "f4_write_zero_struct",  "0", "Control" },
@@ -181,7 +181,7 @@ keys_file =
 
 keys_code =
 {
-    { "f4_comment_selection",       "Semicolon", "Control" },
+    { "f4_comment_selection",       "C", "Control", "Shift" },
     { "f4_uncomment_selection",     "Semicolon", "Control", "Shift", },
     { "f4_autocomplete_or_indent",  "Tab" },
     { "f4_unindent",                "Tab", "Shift" },
@@ -206,14 +206,14 @@ keys_code =
     { "open_file_in_quotes",        "1", "Alt" },
     { "open_matching_file_cpp",     "2", "Alt" },
     
-    { "f4_lego_store_range",        "F5", "Alt" },
-    { "f4_lego_store_range",        "F6", "Alt" },
-    { "f4_lego_store_range",        "F7", "Alt" },
-    { "f4_lego_store_range",        "F8", "Alt" },
+    // { "f4_lego_store_range",        "F5", "Alt" },
+    // { "f4_lego_store_range",        "F6", "Alt" },
+    // { "f4_lego_store_range",        "F7", "Alt" },
+    // { "f4_lego_store_range",        "F8", "Alt" },
     
-    { "f4_lego_store_token",        "F5" },
-    { "f4_lego_store_token",        "F6" },
-    { "f4_lego_store_token",        "F7" },
-    { "f4_lego_store_token",        "F8" },
+    // { "f4_lego_store_token",        "F5" },
+    // { "f4_lego_store_token",        "F6" },
+    // { "f4_lego_store_token",        "F7" },
+    // { "f4_lego_store_token",        "F8" },
     
 };
