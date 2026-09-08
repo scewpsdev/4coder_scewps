@@ -4,9 +4,6 @@
 
 // TOP
 
-const float LISTER_ELEMENT_HEIGHT = 1.5f;
-
-
 function Vec2_f32
 panel_space_from_screen_space(Vec2_f32 p, Vec2_f32 file_region_p0){
     return(p - file_region_p0);
@@ -32,6 +29,8 @@ lister_get_text_field_height(f32 line_height){
 function f32
 lister_get_block_height(Application_Links *app, f32 line_height){
     u64 block_height_100 = def_get_config_u64(app, vars_save_string_lit("lister_block_height"));
+    if (block_height_100 == 0)
+        block_height_100 = 150;
     return(line_height * block_height_100 / 100.0f);
 }
 
@@ -210,7 +209,7 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
         region.x1 -= lister_margin_x;
         region.y1 -= lister_margin_y;
 
-        u64 lister_roundness_100 = def_get_config_u64(app, vars_save_string_lit("lister_roundness"));
+        u64 lister_roundness_100 = def_get_config_u64(app, vars_save_string_lit("lister_panel_roundness"));
         f32 roundness = 100 * lister_roundness_100 * 0.01f;
 
         draw_rectangle_and_margin(app, region, roundness, back_argb, margin_argb, margin_width);

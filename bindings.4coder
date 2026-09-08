@@ -1,5 +1,5 @@
-
-keys_global =
+  
+ keys_global =
 {
     // NOTE(rjf): Meta
     { "exit_4coder" ,                             "F4",      "Alt"                     },
@@ -21,7 +21,8 @@ keys_global =
     { "f4_interactive_open_or_new_in_project",    "O",      "Alt"                      },
     { "f4_open_project",                          "O",      "Control", "Shift"         },
     { "interactive_kill_buffer",                  "K",      "Control"                  },
-    { "interactive_switch_buffer",                "Tab",    "Control"                  },
+    { "interactive_switch_buffer",                "Tab",    "Control", "Shift"                  },
+		{ "quick_swap_buffer",                       "Tab",    "Control"                  },
     { "save_all_dirty_buffers",                   "S",    "Control", "Shift"                },
     { "f4_recent_files_menu",                     "V",      "Alt"                      },
     
@@ -104,12 +105,13 @@ keys_file =
     { "f4_home_first_non_whitespace", "Home" },
     { "page_up",                "PageUp" },
     { "page_down",              "PageDown" },
-    { "goto_beginning_of_file", "PageUp", "Control" },
-    { "goto_end_of_file",       "PageDown", "Control" },
+    { "goto_beginning_of_file", "Home", "Control" },
+    { "goto_end_of_file",       "End", "Control" },
     
     // NOTE(rjf): Mark
     { "set_mark",                    "Space", "Control" },
     { "cursor_mark_swap",            "M", "Control" },
+	{ "select_all",                  "A", "Control" },
     
     // NOTE(rjf): Search
     { "f4_search",                   "F", "Control" },
@@ -122,7 +124,7 @@ keys_file =
     { "list_all_locations_of_identifier", "T", "Control", "Shift" },
     
     // NOTE(rjf): Replace
-    { "replace_in_range",            "A", "Control" },
+    //{ "replace_in_range",            "A", "Control" },
     { "query_replace",               "Q", "Control" },
     { "query_replace_identifier",    "Q", "Control", "Shift" },
     { "query_replace_selection",     "Q", "Alt" },
@@ -171,8 +173,9 @@ keys_file =
     { "f4_code_peek_clear",    "Shift", "Alt" },
     
     // NOTE(rjf): Go To Def
-    { "f4_go_to_definition",   "F12", "Control" },
-    { "f4_go_to_definition_same_panel", "F12" },
+    //{ "f4_go_to_definition",   "F12", "Control" },
+    //{ "f4_go_to_definition_same_panel", "F12" },
+	{ "f4_code_peek", "F12" },
     
     // NOTE(rjf): Helpers
     { "f4_write_zero_struct",  "0", "Control" },
@@ -185,7 +188,7 @@ keys_code =
     { "f4_uncomment_selection",     "Semicolon", "Control", "Shift", },
     { "f4_autocomplete_or_indent",  "Tab" },
     { "f4_unindent",                "Tab", "Shift" },
-    { "word_complete_drop_down",    ".", "Control" },
+    { "word_complete_drop_down",    "Space", "Control" },
     { "write_block",                "R", "Alt" },
     { "write_todo",                 "T", "Alt" },
     { "write_note",                 "Y", "Alt" },

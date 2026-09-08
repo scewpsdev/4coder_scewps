@@ -283,7 +283,7 @@ F4_Brace_RenderLines(Application_Links *app, Buffer_ID buffer, View_ID view,
             }
             if(range.end <= visible_range.end)
             {
-                y_end = range_end_rect.y0;
+                y_end = range_end_rect.y1 - metrics.line_height;
             }
 
             //y_start -= 3;

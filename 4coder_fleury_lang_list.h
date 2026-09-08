@@ -4,10 +4,10 @@
 #define FCODER_FLEURY_LANG_LIST_H
 
 // NOTE(rjf): Include language files here.
-#include "generated/4coder_fleury_lexer_jai.h"
-#include "generated/4coder_fleury_lexer_jai.cpp"
-#include "generated/4coder_fleury_lexer_snek.h"
-#include "generated/4coder_fleury_lexer_snek.cpp"
+#include "../generated/lexer_jai.h"
+#include "../generated/lexer_jai.cpp"
+#include "../generated/lexer_snek.h"
+#include "../generated/lexer_snek.cpp"
 #include "4coder_fleury_lang_cpp.cpp"
 #include "4coder_fleury_lang_jai.cpp"
 #include "4coder_fleury_lang_metadesk.cpp"

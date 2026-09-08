@@ -4,6 +4,8 @@
 
 // TOP
 
+#define GENERATED_BY "custom/4coder_scewps/languages/4coder_snek_lexer_gen.cpp"
+
 #define LANG_NAME_LOWER snek
 #define LANG_NAME_CAMEL Snek
 
