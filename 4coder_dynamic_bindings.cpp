@@ -18,15 +18,8 @@ dynamic_binding_key_code_from_string(String_Const_u8 key_string){
 }
 
 function b32
-dynamic_binding_load_from_file(Application_Links *app, Mapping *mapping, String_Const_u8 filename){
+dynamic_binding_load_from_path(Application_Links *app, Arena* scratch, Mapping *mapping, String_Const_u8 full_path){
     b32 result = false;
-    
-    Scratch_Block scratch(app);
-    
-    String_Const_u8 filename_copied = push_string_copy(scratch, filename);
-    String8List search_list = {};
-    def_search_normal_load_list(scratch, &search_list);
-    String_Const_u8 full_path = def_search_get_full_path(scratch, &search_list, filename_copied);
     
     {
         String8 message = push_stringf(scratch, "loading bindings: %.*s\n",
@@ -41,7 +34,7 @@ dynamic_binding_load_from_file(Application_Links *app, Mapping *mapping, String_
     
     if (file != 0){
         String_Const_u8 data = dump_file_handle(scratch, file);
-        Config *parsed = def_config_from_text(app, scratch, filename, data);
+        Config *parsed = def_config_from_text(app, scratch, full_path, data);
 		fclose(file);
         
         if (parsed != 0){
@@ -137,6 +130,19 @@ dynamic_binding_load_from_file(Application_Links *app, Mapping *mapping, String_
     }
     
     return(result);
+}
+
+function b32
+dynamic_binding_load_from_file(Application_Links* app, Mapping* mapping, String_Const_u8 filename)
+{
+    Scratch_Block scratch(app);
+    
+    String_Const_u8 filename_copied = push_string_copy(scratch, filename);
+    String8List search_list = {};
+    def_search_normal_load_list(scratch, &search_list);
+    String_Const_u8 full_path = def_search_get_full_path(scratch, &search_list, filename_copied);
+
+    return dynamic_binding_load_from_path(app, scratch, mapping, full_path);
 }
 
 // BOTTOM

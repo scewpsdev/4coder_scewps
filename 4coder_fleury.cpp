@@ -497,6 +497,7 @@ void custom_layer_init(Application_Links *app)
         set_custom_hook(app, HookID_DeltaRule,               F4_DeltaRule);
         set_custom_hook(app, HookID_BufferEditRange,         F4_BufferEditRange);
         set_custom_hook_memory_size(app, HookID_DeltaRule, delta_ctx_size(sizeof(Vec2_f32)));
+        set_custom_hook(app, HookID_SaveFile,         		 on_save_file);
     }
     
     // NOTE(rjf): Set up mapping.

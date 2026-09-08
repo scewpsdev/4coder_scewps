@@ -1677,6 +1677,10 @@ CUSTOM_DOC("Set the other non-active panel to view the buffer that the active pa
     View_ID view = get_active_view(app, Access_Always);
     Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
     i64 pos = view_get_cursor_pos(app, view);
+
+    // switch to most recent buffer
+    quick_swap_buffer(app);
+
     change_active_panel(app);
     view = get_active_view(app, Access_Always);
     view_set_buffer(app, view, buffer, 0);

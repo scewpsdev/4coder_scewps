@@ -866,6 +866,192 @@ F4_Tick(Application_Links *app, Frame_Info frame_info)
     default_tick(app, frame_info);
 }
 
+// Save file hook
+
+function void
+color_table_copy(Color_Table dst, Color_Table src){
+    for (i64 i = 0; i < src.count; i += 1){
+        Color_Array *dst_array = &dst.arrays[i];
+        Color_Array *src_array = &src.arrays[i];
+        dst_array->count = src_array->count;
+        block_copy(dst_array->vals, src_array->vals, src_array->count*sizeof(ARGB_Color));
+    }
+}
+
+CUSTOM_COMMAND_SIG(reload_config)
+CUSTOM_DOC("[QOL] Reloads the config.4coder file")
+{
+  Scratch_Block scratch(app);
+  View_ID view = get_active_view(app, Access_Always);
+  Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+  String_Const_u8 path = push_buffer_file_name(app, scratch, buffer);
+  String_Const_u8 file = string_front_of_path(path);
+  if (string_match(file, string_u8_litexpr("config.4coder"))){
+    Face_ID face = get_face_id(app, buffer);
+    Face_Description desc = get_face_description(app, face);
+    load_config_and_apply(app, &global_config_arena, desc.parameters.pt_size, desc.parameters.hinting);
+  }
+}
+
+function void
+comp_error(Application_Links *app, String_Const_u8 error_text){
+  Buffer_ID buffer_comp = buffer_identifier_to_id_create_out_buffer(app, buffer_identifier(string_u8_litexpr("*compilation*")));
+  buffer_replace_range(app, buffer_comp, buffer_range(app, buffer_comp), error_text);
+  block_zero_struct(&prev_location);
+  lock_jump_buffer(app, buffer_comp);
+  get_or_make_list_for_buffer(app, &global_heap, buffer_comp);
+}
+
+function Variable_Handle
+parse_project(Application_Links *app, Arena *arena, File_Name_Data dump)
+{
+  String8 project_root = string_remove_last_folder(dump.file_name);
+
+  if (dump.data.str == 0){
+    print_message(app, string_u8_litexpr("Did not find project.4coder.\n"));
+  }
+
+  // NOTE(allen): Parse config data out of project file
+  Config *config_parse = 0;
+  Variable_Handle prj_var = vars_get_nil();
+  if (dump.data.str != 0){
+    Token_Array array = token_array_from_text(app, arena, dump.data);
+    if (array.tokens != 0){
+      config_parse = def_config_parse(app, arena, dump.file_name, dump.data, array);
+      if (config_parse != 0){
+        i32 version = 0;
+        if (config_parse->version != 0){
+          version = *config_parse->version;
+        }
+
+        switch (version){
+          case 0:
+          case 1:
+          {
+            prj_var = prj_v1_to_v2(app, project_root, config_parse);
+          }break;
+          default:
+          {
+            prj_var = def_fill_var_from_config(app, vars_get_root(), vars_save_string_lit("prj_config"), config_parse);
+          }break;
+        }
+
+      }
+    }
+  }
+
+  // NOTE(allen): Print Project
+  if (!vars_is_nil(prj_var)){
+    vars_print(app, prj_var);
+    print_message(app, string_u8_litexpr("\n"));
+  }
+
+  // NOTE(allen): Print Errors
+  if (config_parse != 0){
+    String8 error_text = config_stringize_errors(app, arena, config_parse);
+    comp_error(app, error_text);
+
+    if (error_text.size > 0){
+      print_message(app, string_u8_litexpr("Project errors:\n"));
+      print_message(app, error_text);
+      print_message(app, string_u8_litexpr("\n"));
+    }
+  }
+
+  return prj_var;
+}
+
+CUSTOM_COMMAND_SIG(reload_project)
+CUSTOM_DOC("[QOL] Reloads the project.4coder file")
+{
+  Scratch_Block scratch(app);
+  View_ID view = get_active_view(app, Access_Always);
+  Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+  String_Const_u8 path = push_buffer_file_name(app, scratch, buffer);
+  String_Const_u8 file = string_front_of_path(path);
+  if (string_match(file, string_u8_litexpr("project.4coder"))){
+    File_Name_Data dump = dump_file(scratch, path);
+    parse_project(app, scratch, dump);
+  }
+}
+
+CUSTOM_COMMAND_SIG(reload_bindings)
+CUSTOM_DOC("[QOL] Reloads the bindings.4coder file")
+{
+  Scratch_Block scratch(app);
+  View_ID view = get_active_view(app, Access_Always);
+  Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+  String_Const_u8 path = push_buffer_file_name(app, scratch, buffer);
+  String_Const_u8 file = string_front_of_path(path);
+  b32 is_bindings = string_match(file, string_u8_litexpr("bindings.4coder"));
+  if (is_bindings && dynamic_binding_load_from_path(app, scratch, &framework_mapping, path)){
+    F4_SetAbsolutelyNecessaryBindings(&framework_mapping);
+  }
+}
+
+function bool
+is_theme_file(String_Const_u8 name){
+  String_Const_u8 target_prefix = string_u8_litexpr("theme-");
+  String_Const_u8 target_suffix = string_u8_litexpr(".4coder");
+  String_Const_u8 actual_prefix = string_prefix(name, target_prefix.size);
+  String_Const_u8 actual_suffix = string_postfix(name, target_suffix.size);
+  return string_match(actual_prefix, target_prefix) && string_match(actual_suffix, target_suffix);
+}
+
+function void
+copy_color_table(Color_Table src, Color_Table* dst)
+{
+    for (int i = 0; i < src.count; i++)
+    {
+        dst->arrays[i] = src.arrays[i];
+    }
+}
+
+BUFFER_HOOK_SIG(on_save_file)
+{
+    Scratch_Block scratch(app);
+    String_Const_u8 path = push_buffer_file_name(app, scratch, buffer_id);
+    String_Const_u8 name = string_front_of_path(path);
+
+    if (is_theme_file(name))
+    {
+        Color_Table color_table = make_color_table(app, &global_theme_arena);
+        Config *config = theme_parse__buffer(app, scratch, buffer_id, &global_theme_arena, &color_table);
+        String_Const_u8 error_text = config_stringize_errors(app, scratch, config);
+        comp_error(app, error_text);
+
+        if (error_text.size > 0){
+            print_message(app, error_text);
+        }
+        else{
+            Color_Table* theme_table = get_color_table_by_name(string_chop(name, 7));
+            copy_color_table(color_table, theme_table);
+            active_color_table = color_table;
+
+            //save_theme(color_table, string_chop(name, 7));
+            //color_table_copy(next_colors, color_table);
+        }
+    }
+
+    if (string_match(name, string_u8_litexpr("config.4coder"))){
+        View_ID view = get_active_view(app, Access_Always);
+        // queue the reload since this function gets called before the file is saved to disk
+        view_enqueue_command_function(app, view, reload_config);
+    }
+
+    if (string_match(name, string_u8_litexpr("project.4coder"))){
+        View_ID view = get_active_view(app, Access_Always);
+        view_enqueue_command_function(app, view, reload_project);
+    }
+
+    if (string_match(name, string_u8_litexpr("bindings.4coder"))){
+        View_ID view = get_active_view(app, Access_Always);
+        view_enqueue_command_function(app, view, reload_bindings);
+    }
+
+    return 0;
+}
+
 //~ NOTE(rjf): Whole Screen Render Hook
 
 function void

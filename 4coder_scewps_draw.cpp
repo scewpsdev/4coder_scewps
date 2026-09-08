@@ -94,6 +94,12 @@ draw_margin(Application_Links *app, Rect_f32 outer, Rect_f32 inner, FColor color
 }
 
 function void
+draw_rectangle_and_margin(Application_Links *app, Rect_f32 rect, f32 roundness, ARGB_Color color, ARGB_Color margin_color, f32 margin){
+    draw_rectangle(app, rect, roundness, margin_color);
+    draw_rectangle(app, rect_inner(rect, margin), roundness, color);
+}
+
+function void
 draw_character_block(Application_Links *app, Text_Layout_ID layout, i64 pos, f32 roundness, ARGB_Color color){
     Rect_f32 rect = text_layout_character_on_screen(app, layout, pos);
     draw_rectangle(app, rect, roundness, color);

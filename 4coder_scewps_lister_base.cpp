@@ -197,7 +197,7 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
         b32 is_active_view = (active_view == view);
 
         FColor margin = get_panel_margin_color(is_active_view?UIHighlight_Active:UIHighlight_None);
-        FColor back = fcolor_id(defcolor_back);
+        FColor back = fcolor_id(defcolor_list_item, 0);
         ARGB_Color margin_argb = fcolor_resolve(margin);
         ARGB_Color back_argb = fcolor_resolve(back);
         f32 margin_width = 3.f;
@@ -210,12 +210,22 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
         region.x1 -= lister_margin_x;
         region.y1 -= lister_margin_y;
 
+        u64 lister_roundness_100 = def_get_config_u64(app, vars_save_string_lit("lister_roundness"));
+        f32 roundness = 100 * lister_roundness_100 * 0.01f;
+
+        draw_rectangle_and_margin(app, region, roundness, back_argb, margin_argb, margin_width);
+
+        /*
         Rect_f32 inner = rect_inner(region, margin_width);
         draw_rectangle(app, inner, 0.f, back_argb);
         if (margin_width > 0.f){
             draw_margin(app, region, inner, margin_argb);
         }
-        region = inner;
+        */
+
+        region = rect_inner(region, margin_width);
+        region.y0 += margin_width;
+        region.y1 -= margin_width;
     }
 
     Rect_f32 prev_clip = draw_set_clip(app, region);
@@ -255,6 +265,10 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
     }
     
     {
+        //FColor text_field_color = fcolor_id(defcolor_margin);
+        //ARGB_Color text_field_argb = fcolor_resolve(text_field_color);
+        //draw_rectangle(app, text_field_rect, 0.f, text_field_argb);
+
         Vec2_f32 p = V2f32(text_field_rect.x0 + 3.f, text_field_rect.y0);
         Fancy_Line text_field = {};
         push_fancy_string(scratch, &text_field, fcolor_id(defcolor_pop1),
@@ -357,8 +371,8 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
             highlight = UIHighlight_Hover;
         }
         
-        u64 lister_roundness_100 = def_get_config_u64(app, vars_save_string_lit("lister_roundness"));
-        f32 roundness = block_height*lister_roundness_100*0.01f;
+        u64 lister_item_roundness_100 = def_get_config_u64(app, vars_save_string_lit("lister_item_roundness"));
+        f32 roundness = block_height * lister_item_roundness_100 * 0.01f;
         draw_rectangle_fcolor(app, item_rect, roundness, get_item_margin_color(highlight));
         draw_rectangle_fcolor(app, item_inner, roundness, get_item_margin_color(highlight, 1));
         
