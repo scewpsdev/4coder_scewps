@@ -186,8 +186,15 @@ draw_line_highlight(Application_Links *app, Text_Layout_ID layout, Range_i64 lin
     Range_f32 y1 = text_layout_line_on_screen(app, layout, line_range.min);
     Range_f32 y2 = text_layout_line_on_screen(app, layout, line_range.max);
     Range_f32 y = range_union(y1, y2);
-    //y.min -= 3;
-    //y.max -= 3;
+
+    View_ID active_view = get_active_view(app, Access_Always);
+    Buffer_ID buffer = view_get_buffer(app, active_view, Access_Always);
+    Face_ID face_id = get_face_id(app, buffer);
+    Face_Metrics metrics = get_face_metrics(app, face_id);
+
+    y.min -= metrics.line_skip;
+    y.max += metrics.line_skip;
+
     if (range_size(y) > 0.f){
         Rect_f32 region = text_layout_region(app, layout);
         draw_rectangle(app, Rf32(rect_range_x(region), y), 0.f, color);
