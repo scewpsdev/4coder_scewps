@@ -4,11 +4,11 @@
 // [X] block cursor
 // [X] File bar column spacing
 // [X] File bar right bounded info
-// [ ] Increase line highlight by 0.5 * line_gap above and below
+// [X] Increase line highlight by 0.5 * line_gap above and below
 // [ ] byp smooth resize
-// [ ] laptop touchpad support
-// [ ] cleartype support
-// [ ] tokyo night theme
+// [X] laptop touchpad support
+// [X] cleartype support
+// [X] tokyo night theme
 // [ ] hex colors
 // [ ] minimap
 
