@@ -8,7 +8,7 @@ mapping = "";
 // MODE
 // "4coder"       - The default 4coder mode that has been around since the beginning of time (2015)
 // "notepad-like" - Single "thin" cursor and highlight ranges like in notepad, sublime, notepad++, etc
-mode = "4coder";
+mode = "notepad-like";
 bind_by_physical_key = false;
 
 // UI
@@ -20,7 +20,7 @@ use_scope_highlight = true;
 use_paren_helper = true;
 use_comment_keyword = true;
 lister_whole_word_backspace_when_modified = true;
-show_line_number_margins = false;
+show_line_number_margins = true;
 enable_output_wrapping = false;
 highlight_line_at_cursor = true;
 
@@ -30,7 +30,7 @@ enable_undo_fade_out = true;
 // the cursor and mark's roundness as a percentage of their width
 // (At 50 the left and right corners will be so round they form a semi-circle,
 //  hence 50 is the max)
-cursor_roundness = 45;
+cursor_roundness = 35;
 
 // mark_thickness is a pixel count value setting the
 // thickness of the mark wire box in original mode
@@ -44,7 +44,7 @@ lister_roundness = 20;
 treat_as_code = ".cpp.c.hpp.h.cc.cs.java.rs.glsl.m.mm";
 enable_virtual_whitespace = true;
 virtual_whitespace_regular_indent = 4;
-enable_code_wrapping = true;
+enable_code_wrapping = false;
 
 // This only applies to code files in code-wrapping mode.
 // Plain text and code files without virtual-whitespace will not be effected.
@@ -57,7 +57,7 @@ automatically_save_changes_on_build = true;
 automatically_load_project = false;
 
 // Indentation
-indent_with_tabs = false;
+indent_with_tabs = true;
 indent_width = 4;
 default_tab_width = 4;
 indent_clear_blank_lines = false;
@@ -66,14 +66,14 @@ indent_clear_blank_lines = false;
 default_theme_name = "4coder";
 
 // Font
-default_font_name = "liberation-mono.ttf";
-default_font_size = 16;
+default_font_name = "C:/Windows/Fonts/consola.ttf";
+default_font_size = 15;
 default_font_hinting = false;
 
 // aa modes:
 //  8bit - mono-chrome 0-255 opacity channel per pixel
 //  1bit - mono-chrome 0/1 opacity channel per pixel
-default_font_aa_mode = "cleartype";
+default_font_aa_mode = "lcd";
 
 // User
 user_name = "not-set";
@@ -87,3 +87,8 @@ default_flags_bat = "-FC -GR- -EHa- -nologo -Zi";
 default_compiler_sh = "g++";
 default_flags_sh  = "-g";
 
+
+// Custom settings
+
+interpolate_cursor = true;
+margin_width = 3;
