@@ -1,0 +1,202 @@
+/*
+* Miscellaneous helpers for common operations.
+*/
+
+// TOP
+
+// Editing commands
+
+CUSTOM_COMMAND_SIG(delete_rect)
+CUSTOM_DOC("Deletes the selected range in rectangle mode.")
+{
+	View_ID view = get_active_view(app, Access_ReadWriteVisible);
+	i64 cursor_pos = view_get_cursor_pos(app, view);
+	i64 mark_pos = view_get_mark_pos(app, view);
+	if (cursor_pos != mark_pos) {
+		Range_i64 range = get_view_range(app, view);
+		Buffer_ID buffer = view_get_buffer(app, view, Access_ReadWriteVisible);
+
+		Buffer_Cursor cursor = buffer_compute_cursor(app, buffer, seek_pos(cursor_pos));
+		Buffer_Cursor mark = buffer_compute_cursor(app, buffer, seek_pos(mark_pos));
+
+		i64 line_min = Min(cursor.line, mark.line);
+		i64 line_max = Max(cursor.line, mark.line);
+		i64 col_min = Min(cursor.col, mark.col);
+		i64 col_max = Max(cursor.col, mark.col);
+
+		History_Group group = history_group_begin(app, buffer);
+		for (i64 line = line_min; line <= line_max; line++) {
+			i64 delete_start = buffer_compute_cursor(app, buffer, seek_line_col(line, col_min)).pos;
+			i64 delete_end = buffer_compute_cursor(app, buffer, seek_line_col(line, col_max)).pos;
+
+			i64 line_end = get_line_end_pos(app, buffer, line);
+			delete_end = Min(delete_end, line_end);
+
+			buffer_replace_range(app, buffer, Ii64(delete_start, delete_end), string_u8_empty);
+		}
+		history_group_end(group);
+	}
+}
+
+CUSTOM_COMMAND_SIG(seek_beginning_of_line)
+CUSTOM_DOC("Seeks the cursor to the beginning of the visual line.")
+{
+	default_seek_beginning_of_line(app);
+
+	View_ID view = get_active_view(app, Access_ReadVisible);
+	Buffer_Scroll scroll = view_get_buffer_scroll(app, view);
+	scroll.target.pixel_shift.x = 0.0f;
+	view_set_buffer_scroll(app, view, scroll, SetBufferScroll_NoCursorChange);
+}
+
+function void
+sc_activate_cursor(Application_Links* app) {
+	cursor_blink_state = 2;
+	animate_in_n_milliseconds(app, 0);
+}
+
+CUSTOM_COMMAND_SIG(click_set_cursor_and_mark)
+CUSTOM_DOC("Sets the cursor position and mark to the mouse position.")
+{
+	default_click_set_cursor_and_mark(app);
+	sc_activate_cursor(app);
+}
+
+CUSTOM_COMMAND_SIG(click_set_cursor)
+CUSTOM_DOC("Sets the cursor position to the mouse position.")
+{
+	default_click_set_cursor(app);
+	sc_activate_cursor(app);
+}
+
+CUSTOM_COMMAND_SIG(click_set_cursor_if_lbutton)
+CUSTOM_DOC("If the mouse left button is pressed, sets the cursor position to the mouse position.")
+{
+	default_click_set_cursor_if_lbutton(app);
+	sc_activate_cursor(app);
+}
+
+CUSTOM_COMMAND_SIG(mouse_wheel_scroll)
+CUSTOM_DOC("Reads the scroll wheel value from the mouse state and scrolls the view currently under the mouse accordingly.")
+{
+	Mouse_State mouse = get_mouse_state(app);
+	View_ID active_view = get_active_view(app, Access_ReadVisible);
+	if (mouse.wheel.y != 0.f || mouse.wheel.x != 0.f) {
+		for (View_ID view = get_view_next(app, 0, Access_ReadVisible);
+			view != 0;
+			view = get_view_next(app, view, Access_ReadVisible)) {
+			Rect_f32 view_rect = view_get_screen_rect(app, view);
+			if (rect_contains_point(view_rect, V2f32(mouse.p)))
+			{
+				Buffer_Scroll scroll = view_get_buffer_scroll(app, view);
+				scroll.target = view_move_buffer_point(app, view, scroll.target, mouse.wheel);
+				view_set_buffer_scroll(app, view, scroll, SetBufferScroll_NoCursorChange);
+				active_view = view;
+				break;
+			}
+		}
+	}
+	if (mouse.l) {
+		no_mark_snap_to_cursor(app, active_view);
+	}
+}
+
+function void
+sc_move_lines(Application_Links* app, Buffer_ID buffer, i64 cursor_line, i64 mark_line, Scan_Direction direction) {
+	i64 upper = Min(cursor_line, mark_line);
+	i64 lower = Max(cursor_line, mark_line);
+
+	History_Group group = history_group_begin(app, buffer);
+	if (direction == Scan_Forward) {
+		for (i64 line_number = lower; line_number >= upper; line_number--) {
+			swap_lines(app, buffer, line_number, line_number + 1);
+		}
+	}
+	else {
+		for (i64 line_number = upper; line_number <= lower; line_number++) {
+			swap_lines(app, buffer, line_number - 1, line_number);
+		}
+	}
+	history_group_end(group);
+}
+
+internal void
+sc_current_view_move_line(Application_Links* app, Scan_Direction direction) {
+	View_ID view = get_active_view(app, Access_ReadWriteVisible);
+	Buffer_ID buffer = view_get_buffer(app, view, Access_ReadWriteVisible);
+
+	i64 cursor_pos = view_get_cursor_pos(app, view);
+	i64 mark_pos = view_get_mark_pos(app, view);
+	Buffer_Cursor cursor = buffer_compute_cursor(app, buffer, seek_pos(cursor_pos));
+	Buffer_Cursor mark = buffer_compute_cursor(app, buffer, seek_pos(mark_pos));
+
+	sc_move_lines(app, buffer, cursor.line, mark.line, direction);
+
+	i64 delta = direction == Scan_Forward ? 1 : -1;
+
+	view_set_cursor_and_preferred_x(app, view, seek_line_col(cursor.line + delta, cursor.col));
+	view_set_mark(app, view, seek_line_col(mark.line + delta, mark.col));
+	no_mark_snap_to_cursor(app, view);
+}
+
+CUSTOM_COMMAND_SIG(move_line_up)
+CUSTOM_DOC("Swaps the line under the cursor with the line above it, and moves the cursor up with it.")
+{
+	sc_current_view_move_line(app, Scan_Backward);
+}
+
+CUSTOM_COMMAND_SIG(move_line_down)
+CUSTOM_DOC("Swaps the line under the cursor with the line below it, and moves the cursor down with it.")
+{
+	sc_current_view_move_line(app, Scan_Forward);
+}
+
+// Misc
+
+CUSTOM_COMMAND_SIG(command_lister)
+CUSTOM_DOC("Opens an interactive list of all registered commands.")
+{
+	default_command_lister(app);
+
+	View_ID view = get_active_view(app, Access_ReadWriteVisible);
+	no_mark_snap_to_cursor(app, view);
+}
+
+CUSTOM_COMMAND_SIG(reload_config)
+CUSTOM_DOC("Reloads config file")
+{
+	View_ID view = get_active_view(app, Access_Always);
+	Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+	
+	Scratch_Block scratch(app);
+
+	String_Const_u8 path = push_buffer_file_name(app, scratch, buffer);
+	String_Const_u8 name = string_front_of_path(path);
+
+	if (string_match(name, string_u8_litexpr("config.4coder"))) {
+		load_config_and_apply(app, &global_config_arena, 0, false);
+	}
+}
+
+CUSTOM_COMMAND_SIG(reload_bindings)
+CUSTOM_DOC("Reloads bindings file")
+{
+	View_ID view = get_active_view(app, Access_Always);
+	Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+
+	Scratch_Block scratch(app);
+
+	String_Const_u8 path = push_buffer_file_name(app, scratch, buffer);
+	String_Const_u8 name = string_front_of_path(path);
+
+	if (string_match(name, string_u8_litexpr("bindings.4coder")) && dynamic_binding_load_from_file(app, &framework_mapping, name)) {
+		String_ID global_map_id = vars_save_string_lit("keys_global");
+		String_ID file_map_id = vars_save_string_lit("keys_file");
+		String_ID code_map_id = vars_save_string_lit("keys_code");
+
+		sc_setup_essential_mapping(&framework_mapping, global_map_id, file_map_id, code_map_id);
+	}
+}
+
+// BOTTOM
+

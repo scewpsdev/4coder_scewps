@@ -45,7 +45,11 @@
 
 #include "4coder_default_framework_variables.cpp"
 #include "4coder_default_colors.cpp"
+
+#define seek_beginning_of_line default_seek_beginning_of_line
 #include "4coder_helper.cpp"
+#undef seek_beginning_of_line
+
 #include "4coder_delta_rule.cpp"
 #include "4coder_layout_rule.cpp"
 #include "4coder_code_index.cpp"
@@ -56,13 +60,36 @@
 #include "4coder_dynamic_bindings.cpp"
 #include "4coder_default_framework.cpp"
 #include "4coder_clipboard.cpp"
+
 #include "4coder_lister_base.cpp"
 #include "4coder_scewps_lister.cpp"
 #define run_lister sc_run_lister
+
+#define click_set_cursor_and_mark default_click_set_cursor_and_mark
+#define click_set_cursor default_click_set_cursor
+#define click_set_cursor_if_lbutton default_click_set_cursor_if_lbutton
+#define mouse_wheel_scroll_over_hovered_view default_mouse_wheel_scroll_over_hovered_view
+#define mouse_wheel_scroll default_mouse_wheel_scroll
+#define move_line_up default_move_line_up
+#define move_line_down default_move_line_down
+
 #include "4coder_base_commands.cpp"
+
+#undef click_set_cursor_and_mark
+#undef click_set_cursor
+#undef click_set_cursor_if_lbutton
+#undef mouse_wheel_scroll_over_hovered_view
+#undef mouse_wheel_scroll
+#undef move_line_up
+#undef move_line_down
+
 #include "4coder_insertion.cpp"
 #include "4coder_eol.cpp"
+
+#define command_lister default_command_lister
 #include "4coder_lists.cpp"
+#undef command_lister
+
 #include "4coder_auto_indent.cpp"
 #include "4coder_search.cpp"
 #include "4coder_jumping.cpp"

@@ -56,14 +56,14 @@ keys_file = {
     { "sc_seek_beginning_of_line", "Home" },
     { "page_up",                "PageUp" },
     { "page_down",              "PageDown" },
-    { "goto_beginning_of_file", "PageUp", "Control" },
-    { "goto_end_of_file",       "PageDown", "Control" },
+    { "goto_beginning_of_file", "Home", "Control" },
+    { "goto_end_of_file",       "End", "Control" },
     { "move_up_to_blank_line_end",        "Up", "Control" },
     { "move_down_to_blank_line_end",      "Down", "Control" },
     { "move_left_whitespace_boundary",    "Left", "Control" },
     { "move_right_whitespace_boundary",   "Right", "Control" },
-    { "move_line_up",                     "Up", "Alt" },
-    { "move_line_down",                   "Down", "Alt" },
+    { "sc_move_line_up",                     "Up", "Alt" },
+    { "sc_move_line_down",                   "Down", "Alt" },
     { "backspace_alpha_numeric_boundary", "Backspace", "Control" },
     { "delete_alpha_numeric_boundary",    "Delete", "Control" },
     { "snipe_backward_whitespace_or_token_boundary", "Backspace", "Alt" },
@@ -71,8 +71,8 @@ keys_file = {
     { "set_mark",                    "Space", "Control" },
     { "replace_in_range",            "A", "Control" },
     { "copy",                        "C", "Control" },
-    { "delete_range",                "D", "Control" },
-    { "delete_line",                 "D", "Control", "Shift" },
+    //{ "delete_range",                "D", "Control" },
+    { "delete_line",                 "D", "Control" },
     { "center_view",                 "E", "Control" },
     { "left_adjust_view",            "E", "Control", "Shift" },
     { "search",                      "F", "Control" },
@@ -103,6 +103,8 @@ keys_file = {
     { "if_read_only_goto_position",  "Return" },
     { "if_read_only_goto_position_same_panel", "Return", "Shift" },
     { "view_jump_list_with_lister",  "Period", "Control", "Shift" },
+
+	{ "delete_rect",              "Delete", "Shift", "Alt" },
 };
 
 keys_code = {

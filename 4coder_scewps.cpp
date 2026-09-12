@@ -19,12 +19,12 @@
 		[X] line numbers same background
 	[ ] editing
 		[X] proper home
-		[ ] move selected lines with alt
-		[ ] block select
+		[X] move selected lines with alt
+		[X] block select
 		[ ] slower autoscroll
 	[ ] hot reloading
-		[ ] config
-		[ ] bindings
+		[X] config
+		[X] bindings
 		[ ] themes
 			[ ] smooth interpolate
 			[ ] preview on lister hover
@@ -60,6 +60,21 @@
 		[ ] code index
 	[ ] minimap
 	[ ] focus color theme
+	[ ] relative line numbers
+	[ ] vim mode
+
+
+	Commands:
+	- delete_rect: deletes text in block mode
+
+	Fixes:
+	- fixed seek_beginning_of_line: scrolls view to left side
+	- fixed move_line_up: supports selections
+	- fixed move_line_down: supports selections
+	- fixed mouse_wheel_scroll: scrolls hovered view instead of active, doesn't switch to scrolled view
+	- fixed selection being cancelled when opening command lister
+	- smooth and horizontal scroll fix by flyingsolomon
+
 
 */
 
@@ -83,7 +98,7 @@ global b32 cursor_blink_paused;
 
 // custom files
 #include "4coder_scewps_config.cpp"
-#include "4coder_scewps_helper.cpp"
+#include "4coder_scewps_commands.cpp"
 #include "4coder_scewps_draw.cpp"
 #include "4coder_scewps_hooks.cpp"
 
@@ -112,15 +127,18 @@ custom_layer_init(Application_Links* app) {
 	set_custom_hook(app, HookID_SaveFile, sc_file_save);
 
 	mapping_init(tctx, &framework_mapping);
+
 	String_ID global_map_id = vars_save_string_lit("keys_global");
 	String_ID file_map_id = vars_save_string_lit("keys_file");
 	String_ID code_map_id = vars_save_string_lit("keys_code");
+
 #if OS_MAC
 	setup_mac_mapping(&framework_mapping, global_map_id, file_map_id, code_map_id);
 #else
 	setup_default_mapping(&framework_mapping, global_map_id, file_map_id, code_map_id);
 #endif
-	setup_essential_mapping(&framework_mapping, global_map_id, file_map_id, code_map_id);
+
+	sc_setup_essential_mapping(&framework_mapping, global_map_id, file_map_id, code_map_id);
 }
 
 #endif //FCODER_DEFAULT_BINDINGS

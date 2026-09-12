@@ -17,6 +17,14 @@ sc_draw_cursor(Application_Links *app, View_ID view_id, b32 is_active_view,
 
     if (!has_highlight_range) {
         i32 cursor_sub_id = default_cursor_sub_id();
+        i64 mark_pos = view_get_mark_pos(app, view_id);
+
+        if (cursor_pos != mark_pos) {
+            Range_i64 range = Ii64(cursor_pos, mark_pos);
+            draw_character_block(app, text_layout_id, range, roundness, fcolor_id(defcolor_highlight));
+            paint_text_color_fcolor(app, text_layout_id, range, fcolor_id(defcolor_at_highlight));
+        }
+
         ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
 
         if (cursor_blink_state) {

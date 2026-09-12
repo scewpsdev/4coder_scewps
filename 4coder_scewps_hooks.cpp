@@ -24,8 +24,7 @@ CUSTOM_DOC("Input consumption loop for default view behavior")
 
         // activate cursor on input
         if (input.event.kind == InputEventKind_KeyStroke) {
-            cursor_blink_state = 2;
-            animate_in_n_milliseconds(app, 0);
+            sc_activate_cursor(app);
         }
 
         ProfileScopeNamed(app, "before view input", view_input_profile);
@@ -333,30 +332,21 @@ BUFFER_HOOK_SIG(sc_begin_buffer){
 }
 
 BUFFER_HOOK_SIG(sc_file_save){
-    // buffer_id
-    ProfileScope(app, "default file save");
-    
-    b32 auto_indent = def_get_config_b32(vars_save_string_lit("automatically_indent_text_on_save"));
-    b32 is_virtual = def_get_config_b32(vars_save_string_lit("enable_virtual_whitespace"));
-    if (auto_indent && is_virtual){
-        auto_indent_buffer(app, buffer_id, buffer_range(app, buffer_id));
+    default_file_save(app, buffer_id);
+
+    Scratch_Block scratch(app);
+
+    String_Const_u8 path = push_buffer_file_name(app, scratch, buffer_id);
+    String_Const_u8 name = string_front_of_path(path);
+
+    if (string_match(name, string_u8_litexpr("config.4coder"))) {
+        View_ID view = get_active_view(app, Access_Always);
+        view_enqueue_command_function(app, view, reload_config);
+    } else if (string_match(name, string_u8_litexpr("bindings.4coder"))) {
+        View_ID view = get_active_view(app, Access_Always);
+        view_enqueue_command_function(app, view, reload_bindings);
     }
     
-    Managed_Scope scope = buffer_get_managed_scope(app, buffer_id);
-    Line_Ending_Kind *eol = scope_attachment(app, scope, buffer_eol_setting,
-                                             Line_Ending_Kind);
-    switch (*eol){
-        case LineEndingKind_LF:
-        {
-            rewrite_lines_to_lf(app, buffer_id);
-        }break;
-        case LineEndingKind_CRLF:
-        {
-            rewrite_lines_to_crlf(app, buffer_id);
-        }break;
-    }
-    
-    // no meaning for return
     return(0);
 }
 
