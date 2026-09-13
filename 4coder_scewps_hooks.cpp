@@ -94,6 +94,50 @@ sc_tick(Application_Links* app, Frame_Info frame_info) {
     if (!cursor_blink_paused) {
         animate_in_n_milliseconds(app, u32((0.5f - cursor_blink_acc) * 1000));
     }
+
+    // if theme got changed, set that theme to be the interpolation dst
+    if (active_color_table.arrays != current_color_table.arrays) {
+        copy_color_table(active_color_table, next_color_table);
+        active_color_table = current_color_table;
+    }
+    for (i64 i = 0; i < current_color_table.count; i++) {
+        for (i64 j = 0; j < current_color_table.arrays[i].count; j++) {
+            Vec4_f32 from = unpack_color(current_color_table.arrays[i].vals[j]);
+            Vec4_f32 to = unpack_color(next_color_table.arrays[i].vals[j]);
+
+            bool interpolate = !near_zero(to - from);
+            Vec4_f32 result = interpolate ? to : lerp(from, to, frame_info.animation_dt, 1e-4f);
+            if (interpolate)
+                animate_in_n_milliseconds(app, 0);
+
+            current_color_table.arrays[i].vals[j] = pack_color(result);
+        }
+    }
+}
+
+DELTA_RULE_SIG(fixed_time_linear_delta) {
+    local_const f32 duration_in_seconds = (1.f / 8.f);
+    local_const f32 dt_multiplier = 1.f / duration_in_seconds;
+    f32 step = dt * dt_multiplier;
+    f32* t = (f32*)data;
+    *t = clamp(0.f, *t, 1.f);
+    f32 prev_t = *t;
+    if (is_new_target) {
+        prev_t = 0.f;
+        *t = step;
+    }
+    else {
+        *t += step;
+    }
+    *t = clamp(0.f, *t, 1.f);
+    Vec2_f32 result = pending;
+    if (*t < 1.f) {
+        f32 prev_x = cubic_reinterpolate(prev_t);
+        f32 x = cubic_reinterpolate(*t);
+        f32 portion = ((x - prev_x) / (1.f - prev_x));
+        result *= portion;
+    }
+    return(result);
 }
 
 function void
@@ -331,6 +375,22 @@ BUFFER_HOOK_SIG(sc_begin_buffer){
     return(0);
 }
 
+bool string_has_prefix(String_Const_u8 s, String_Const_u8 prefix) {
+    return (string_match(string_prefix(s, prefix.size), prefix));
+}
+
+bool string_has_postfix(String_Const_u8 s, String_Const_u8 postfix) {
+    return (string_match(string_postfix(s, postfix.size), postfix));
+}
+
+function void
+copy_color_table(Color_Table src, Color_Table dst) {
+    for (i64 i = 0; i < src.count; i++) {
+        dst.arrays[i].count = src.arrays[i].count;
+        block_copy(dst.arrays[i].vals, src.arrays[i].vals, src.arrays[i].count * sizeof(ARGB_Color));
+    }
+}
+
 BUFFER_HOOK_SIG(sc_file_save){
     default_file_save(app, buffer_id);
 
@@ -339,7 +399,16 @@ BUFFER_HOOK_SIG(sc_file_save){
     String_Const_u8 path = push_buffer_file_name(app, scratch, buffer_id);
     String_Const_u8 name = string_front_of_path(path);
 
-    if (string_match(name, string_u8_litexpr("config.4coder"))) {
+    if (string_has_prefix(name, string_u8_litexpr("theme-")) && string_has_postfix(name, string_u8_litexpr(".4coder"))) {
+        Arena* arena = &global_theme_arena;
+        Color_Table color_table = make_color_table(app, arena);
+        Config* config = theme_parse__buffer(app, scratch, buffer_id, arena, &color_table);
+        String_Const_u8 error_text = config_stringize_errors(app, scratch, config);
+        print_message(app, error_text);
+
+        copy_color_table(color_table, next_color_table);
+
+    } else if (string_match(name, string_u8_litexpr("config.4coder"))) {
         View_ID view = get_active_view(app, Access_Always);
         view_enqueue_command_function(app, view, reload_config);
     } else if (string_match(name, string_u8_litexpr("bindings.4coder"))) {

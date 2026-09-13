@@ -53,17 +53,17 @@ keys_file = {
     { "move_left",              "Left" },
     { "move_right",             "Right" },
     { "seek_end_of_line",       "End" },
-    { "sc_seek_beginning_of_line", "Home" },
+    { "seek_beginning_of_line", "Home" },
     { "page_up",                "PageUp" },
     { "page_down",              "PageDown" },
     { "goto_beginning_of_file", "Home", "Control" },
     { "goto_end_of_file",       "End", "Control" },
-    { "move_up_to_blank_line_end",        "Up", "Control" },
-    { "move_down_to_blank_line_end",      "Down", "Control" },
+    //{ "move_up_to_blank_line_end",        "Up", "Control" },
+    //{ "move_down_to_blank_line_end",      "Down", "Control" },
     { "move_left_whitespace_boundary",    "Left", "Control" },
     { "move_right_whitespace_boundary",   "Right", "Control" },
-    { "sc_move_line_up",                     "Up", "Alt" },
-    { "sc_move_line_down",                   "Down", "Alt" },
+    { "move_line_up",                     "Up", "Alt" },
+    { "move_line_down",                   "Down", "Alt" },
     { "backspace_alpha_numeric_boundary", "Backspace", "Control" },
     { "delete_alpha_numeric_boundary",    "Delete", "Control" },
     { "snipe_backward_whitespace_or_token_boundary", "Backspace", "Alt" },
@@ -105,6 +105,8 @@ keys_file = {
     { "view_jump_list_with_lister",  "Period", "Control", "Shift" },
 
 	{ "delete_rect",              "Delete", "Shift", "Alt" },
+	{ "quarter_page_up",        "Up", "Control" },
+    { "quarter_page_down",      "Down", "Control" },
 };
 
 keys_code = {
