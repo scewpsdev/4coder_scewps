@@ -92,3 +92,5 @@ default_flags_sh  = "-g";
 
 interpolate_cursor = true;
 margin_width = 3;
+lister_panel_roundness = 8;
+lister_item_roundness = 8;

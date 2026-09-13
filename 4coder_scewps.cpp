@@ -28,12 +28,12 @@
 	[ ] hot reloading
 		[X] config
 		[X] bindings
-		[ ] themes
-			[ ] smooth interpolate
-			[ ] preview on lister hover
+		[X] themes
+			[X] smooth interpolate
+			[X] preview on lister hover
 	[ ] lister
-		[ ] floating lister
-		[ ] darken buffer behind lister
+		[X] floating lister
+		[X] darken buffer behind lister
 		[ ] ctrl+backspace
 		[ ] backspace on path deletes whole directory
 		[ ] display keybindings on right
@@ -89,9 +89,6 @@
 #define FCODER_DEFAULT_BINDINGS_CPP
 
 #include "4coder_scewps_include.h"
-#include "4coder_scewps_include.cpp"
-
-// NOTE(allen): Users can declare their own managed IDs here.
 
 // custom globals
 global Rect_f32 current_cursor_rect;
@@ -104,8 +101,15 @@ global b32 cursor_blink_paused;
 global Color_Table current_color_table;
 global Color_Table next_color_table;
 
+global i32 lister_open;
+global View_ID lister_view;
+
+#include "4coder_scewps_include.cpp"
+
+// NOTE(allen): Users can declare their own managed IDs here.
+
 // custom files
-#include "4coder_scewps_config.cpp"
+#include "4coder_scewps_theme.cpp"
 #include "4coder_scewps_commands.cpp"
 #include "4coder_scewps_draw.cpp"
 #include "4coder_scewps_hooks.cpp"

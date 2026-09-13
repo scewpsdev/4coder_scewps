@@ -57,13 +57,20 @@
 #include "4coder_draw.cpp"
 #include "4coder_font_helper.cpp"
 #include "4coder_config.cpp"
+#include "4coder_scewps_config.cpp"
 #include "4coder_dynamic_bindings.cpp"
 #include "4coder_default_framework.cpp"
 #include "4coder_clipboard.cpp"
 
+#define run_lister default_run_lister
+#define run_lister_with_refresh_handler default_run_lister_with_refresh_handler
+#define get_choice_from_user default_get_choice_from_user
 #include "4coder_lister_base.cpp"
+#undef run_lister
+#undef run_lister_with_refresh_handler
+#undef get_choice_from_user
+
 #include "4coder_scewps_lister.cpp"
-#define run_lister sc_run_lister
 
 #define click_set_cursor_and_mark default_click_set_cursor_and_mark
 #define click_set_cursor default_click_set_cursor
@@ -87,8 +94,10 @@
 #include "4coder_eol.cpp"
 
 #define command_lister default_command_lister
+#define theme_lister default_theme_lister
 #include "4coder_lists.cpp"
 #undef command_lister
+#undef theme_lister
 
 #include "4coder_auto_indent.cpp"
 #include "4coder_search.cpp"
