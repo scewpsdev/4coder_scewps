@@ -75,10 +75,17 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 
 	Rect_f32 text_field_rect = {};
 	Rect_f32 list_rect = {};
+	Rect_f32 status_bar_rect = {};
 	{
 		Rect_f32_Pair pair = lister_get_top_level_layout(region, text_field_height);
 		text_field_rect = pair.min;
 		list_rect = pair.max;
+		
+		if (lister->highlighted_node->description.size) {
+			pair = rect_split_top_bottom(list_rect, rect_height(list_rect) - text_field_height);
+			list_rect = pair.min;
+			status_bar_rect = pair.max;
+		}
 
 		//list_rect = rect_inner(list_rect, margin_width);
 	}
@@ -102,6 +109,25 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 		if (cap_width < width) {
 			Rect_f32 prect = draw_set_clip(app, Rf32(p.x, text_field_rect.y0, p.x + cap_width, text_field_rect.y1));
 			p.x += cap_width - width;
+			draw_fancy_line(app, face_id, fcolor_zero(), &text_field, p);
+			draw_set_clip(app, prect);
+		}
+		else {
+			draw_fancy_line(app, face_id, fcolor_zero(), &text_field, p);
+		}
+	}
+
+	if (lister->highlighted_node->description.size)
+	{
+		Vec2_f32 p = V2f32(status_bar_rect.x0 + 3.f, status_bar_rect.y0 + 3);
+		Fancy_Line text_field = {};
+		push_fancy_string(scratch, &text_field, fcolor_id(defcolor_line_numbers_text),
+			lister->highlighted_node->description);
+
+		f32 width = get_fancy_line_width(app, face_id, &text_field);
+		f32 cap_width = status_bar_rect.x1 - p.x - 6.f;
+		if (cap_width < width) {
+			Rect_f32 prect = draw_set_clip(app, Rf32(p.x, status_bar_rect.y0, p.x + cap_width, status_bar_rect.y1));
 			draw_fancy_line(app, face_id, fcolor_zero(), &text_field, p);
 			draw_set_clip(app, prect);
 		}
@@ -195,10 +221,17 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 
 		Fancy_Line line = {};
 		push_fancy_string(scratch, &line, fcolor_id(defcolor_text_default), node->string);
-		push_fancy_stringf(scratch, &line, " ");
-		push_fancy_string(scratch, &line, fcolor_id(defcolor_pop2), node->status);
+		//push_fancy_stringf(scratch, &line, " ");
 
 		Vec2_f32 p = item_inner.p0 + V2f32(3.f, (block_height - line_height) * 0.5f);
+		draw_fancy_line(app, face_id, fcolor_zero(), &line, p);
+
+		f32 space_left = rect_width(item_inner) - 3 * 2 - get_fancy_line_width(app, face_id, &line) - line_height;
+
+		line = {};
+		push_fancy_string(scratch, &line, fcolor_id(defcolor_pop2), node->status);
+
+		p = V2f32(item_inner.x1 - 3 - Min(get_fancy_line_width(app, face_id, &line), space_left), item_inner.y0 + (block_height - line_height) * 0.5f);
 		draw_fancy_line(app, face_id, fcolor_zero(), &line, p);
 	}
 
@@ -207,6 +240,9 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 
 function String_Const_u8
 string_remove_last_word(String_Const_u8 str) {
+	if (str.size == 0)
+		return str;
+
 	i32 num_deleted_chars = 0;
 	b32 identifier_found = false;
 	for (;;) {
@@ -538,6 +574,55 @@ run_lister(Application_Links* app, Lister* lister) {
 	lister_view = 0;
 
 	return(lister->out);
+}
+
+function void*
+lister_add_item(Lister* lister, Lister_Prealloced_String string, Lister_Prealloced_String status, Lister_Prealloced_String description, void* user_data, u64 extra_space) {
+	void* base_memory = push_array(lister->arena, u8, sizeof(Lister_Node) + extra_space);
+	Lister_Node* node = (Lister_Node*)base_memory;
+	node->string = string.string;
+	node->status = status.string;
+	node->description = description.string;
+	node->user_data = user_data;
+	node->raw_index = lister->options.count;
+	zdll_push_back(lister->options.first, lister->options.last, node);
+	lister->options.count += 1;
+	void* result = (node + 1);
+	return(result);
+}
+
+function void*
+lister_add_item(Lister* lister, Lister_Prealloced_String string, Lister_Prealloced_String status, void* user_data, u64 extra_space) {
+	return lister_add_item(lister, string, status, {}, user_data, extra_space);
+}
+
+function void*
+lister_add_item(Lister* lister, Lister_Prealloced_String string, String_Const_u8 status,
+	void* user_data, u64  extra_space) {
+	return(lister_add_item(lister, string, lister_prealloced(push_string_copy(lister->arena, status)), {}, user_data, extra_space));
+}
+
+function void*
+lister_add_item(Lister* lister, String_Const_u8 string, Lister_Prealloced_String status, void* user_data, u64 extra_space) {
+	return(lister_add_item(lister, lister_prealloced(push_string_copy(lister->arena, string)), status, {}, user_data, extra_space));
+}
+
+function void*
+lister_add_item(Lister* lister, String_Const_u8 string, String_Const_u8 status, void* user_data, u64 extra_space) {
+	return(lister_add_item(lister,
+		lister_prealloced(push_string_copy(lister->arena, string)),
+		lister_prealloced(push_string_copy(lister->arena, status)),
+		{},
+		user_data, extra_space));
+}
+
+function void*
+lister_add_item(Lister* lister, String_Const_u8 string, String_Const_u8 status, String_Const_u8 description, void* user_data, u64 extra_space) {
+	return(lister_add_item(lister,
+		lister_prealloced(push_string_copy(lister->arena, string)),
+		lister_prealloced(push_string_copy(lister->arena, status)),
+		lister_prealloced(push_string_copy(lister->arena, description)),
+		user_data, extra_space));
 }
 
 function Lister_Choice*

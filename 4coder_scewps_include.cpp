@@ -64,10 +64,12 @@
 
 #define run_lister default_run_lister
 #define run_lister_with_refresh_handler default_run_lister_with_refresh_handler
+#define lister_add_item default_lister_add_item
 #define get_choice_from_user default_get_choice_from_user
 #include "4coder_lister_base.cpp"
 #undef run_lister
 #undef run_lister_with_refresh_handler
+#undef lister_add_item
 #undef get_choice_from_user
 
 #include "4coder_scewps_lister.cpp"

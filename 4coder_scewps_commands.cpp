@@ -170,12 +170,125 @@ CUSTOM_DOC("Swaps the line under the cursor with the line below it, and moves th
 
 // Misc
 
+function void
+add_command_to_list(Lister* lister, i32 command_id, Arena* arena, Command_Lister_Status_Rule* status_rule) {
+	Custom_Command_Function* proc = fcoder_metacmd_table[command_id].proc;
+	String_Const_u8 status = {};
+	switch (status_rule->mode) {
+	case CommandLister_Descriptions:
+	{
+		status = SCu8(fcoder_metacmd_table[command_id].description);
+	}break;
+	case CommandLister_Bindings:
+	{
+		Command_Trigger_List triggers = map_get_triggers_recursive(arena, status_rule->mapping, status_rule->map_id, proc);
+
+		List_String_Const_u8 list = {};
+		for (Command_Trigger* node = triggers.first;
+			node != 0;
+			node = node->next) {
+			command_trigger_stringize(arena, &list, node);
+			if (node->next != 0) {
+				string_list_push(arena, &list, string_u8_litexpr(" "));
+			}
+		}
+
+		status = string_list_flatten(arena, list);
+	}break;
+	}
+
+	String_Const_u8 cmd = SCu8(fcoder_metacmd_table[command_id].name);
+	String_Const_u8 name = push_string_copy(arena, cmd);
+	b32 next_is_token_start = true;
+	for (i32 k = 0; k < name.size; k++) {
+		if (name.str[k] == '_') {
+			name.str[k] = ' ';
+			next_is_token_start = true;
+		}
+		else if (next_is_token_start) {
+			name.str[k] = character_to_upper(name.str[k]);
+			next_is_token_start = false;
+		}
+	}
+
+	String_Const_u8 description = SCu8(fcoder_metacmd_table[command_id].description);
+
+	lister_add_item(lister, name, status, description,
+		(void*)proc, 0);
+}
+
+function Custom_Command_Function*
+sc_get_command_from_user(Application_Links* app, String_Const_u8 query, i32* command_ids, i32 command_id_count, Command_Lister_Status_Rule* status_rule) {
+	if (command_ids == 0) {
+		command_id_count = command_one_past_last_id;
+	}
+
+	Scratch_Block scratch(app);
+	Lister_Block lister(app, scratch);
+	lister_set_query(lister, query);
+	lister_set_default_handlers(lister);
+
+	if (last_used_command) {
+		add_command_to_list(lister, get_command_id(last_used_command), scratch, status_rule);
+	}
+
+	for (i32 i = 0; i < command_id_count; i += 1) {
+		i32 j = i;
+		if (command_ids != 0) {
+			j = command_ids[i];
+		}
+		j = clamp(0, j, command_one_past_last_id);
+
+		add_command_to_list(lister, j, scratch, status_rule);
+	}
+
+	Lister_Result l_result = run_lister(app, lister);
+
+	Custom_Command_Function* result = 0;
+	if (!l_result.canceled) {
+		result = (Custom_Command_Function*)l_result.user_data;
+		last_used_command = result;
+	}
+	return(result);
+}
+
+function Custom_Command_Function*
+sc_get_command_from_user(Application_Links* app, String_Const_u8 query, Command_Lister_Status_Rule* status_rule) {
+	return(sc_get_command_from_user(app, query, 0, 0, status_rule));
+}
+
+function Custom_Command_Function*
+sc_get_command_from_user(Application_Links* app, char* query,
+	i32* command_ids, i32 command_id_count, Command_Lister_Status_Rule* status_rule) {
+	return(sc_get_command_from_user(app, SCu8(query), command_ids, command_id_count, status_rule));
+}
+
+function Custom_Command_Function*
+sc_get_command_from_user(Application_Links* app, char* query, Command_Lister_Status_Rule* status_rule) {
+	return(sc_get_command_from_user(app, SCu8(query), 0, 0, status_rule));
+}
+
 CUSTOM_COMMAND_SIG(command_lister)
 CUSTOM_DOC("Opens an interactive list of all registered commands.")
 {
-	default_command_lister(app);
+	View_ID view = get_this_ctx_view(app, Access_Always);
+	if (view != 0) {
+		Command_Lister_Status_Rule rule = {};
+		Buffer_ID buffer = view_get_buffer(app, view, Access_Visible);
+		Managed_Scope buffer_scope = buffer_get_managed_scope(app, buffer);
+		Command_Map_ID* map_id_ptr = scope_attachment(app, buffer_scope, buffer_map_id, Command_Map_ID);
+		if (map_id_ptr != 0) {
+			rule = command_lister_status_bindings(&framework_mapping, *map_id_ptr);
+		}
+		else {
+			rule = command_lister_status_descriptions();
+		}
+		Custom_Command_Function* func = sc_get_command_from_user(app, "Command:", &rule);
+		if (func != 0) {
+			view_enqueue_command_function(app, view, func);
+		}
+	}
 
-	View_ID view = get_active_view(app, Access_ReadWriteVisible);
 	no_mark_snap_to_cursor(app, view);
 }
 

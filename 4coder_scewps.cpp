@@ -32,14 +32,15 @@
 		[X] themes
 			[X] smooth interpolate
 			[X] preview on lister hover
-	[ ] lister
+	[X] lister
 		[X] floating lister
 		[X] darken buffer behind lister
 		[X] ctrl+backspace
 		[X] backspace on path deletes whole directory
-		[ ] display keybindings on right
-		[ ] display commands as capitalized words
-		[ ] preselect last command (or put at top)
+		[X] display keybindings on right
+		[X] display commands as capitalized words
+		[X] preselect last command (or put at top)
+		[X] lister description status bar
 	[ ] language support
 		[ ] c++
 		[ ] 4coder
@@ -103,6 +104,7 @@ global Color_Table next_color_table;
 
 global i32 lister_open;
 global View_ID lister_view;
+global Custom_Command_Function* last_used_command;
 
 #include "4coder_scewps_include.cpp"
 
