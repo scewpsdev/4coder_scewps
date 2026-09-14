@@ -32,20 +32,22 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	f32 block_height = line_height * (item_height / 100.0f);
 	f32 text_field_height = lister_get_text_field_height(line_height);
 
-	f32 margin_width = (f32)def_get_config_u64(app, vars_save_string_lit("margin_width"), 3);
+	f32 lister_margin = (f32)def_get_config_u64(app, vars_save_string_lit("lister_margin"), 3);
+	f32 lister_inner_margin = (f32)def_get_config_u64(app, vars_save_string_lit("lister_inner_margin"), 3);
+	f32 lister_item_margin = (f32)def_get_config_u64(app, vars_save_string_lit("lister_item_margin"), 3);
 
 	Rect_f32 region = view_get_screen_rect(app, view);
-	region = rect_inner(region, margin_width);
+	region = rect_inner(region, lister_margin);
 	region = layout_file_bar_on_bot(region, line_height).min;
 
 	f32 lister_width = (f32)def_get_config_u64(app, vars_save_string_lit("lister_width"), 80);
 	lister_width = lister_width / 100.0f * rect_width(region);
-	lister_width = Min(Max(lister_width, line_height * 40), rect_width(region) - margin_width * 2);
+	lister_width = Min(Max(lister_width, line_height * 40), rect_width(region) - lister_margin * 2);
 
 	f32 lister_height = (f32)def_get_config_u64(app, vars_save_string_lit("lister_height"), 90);
 	lister_height = lister_height / 100.0f * rect_height(region);
-	lister_height = Min(lister_height, rect_height(region) - margin_width * 2);
-	
+	lister_height = Min(lister_height, rect_height(region) - lister_margin * 2);
+
 	f32 margin_x = (region.x1 - region.x0 - lister_width) * 0.5f;
 	f32 margin_y = (region.y1 - region.y0 - lister_height) * 0.5f;
 	region.x0 += margin_x;
@@ -58,9 +60,10 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	ARGB_Color margin_color = fcolor_resolve(get_panel_margin_color(is_active_view ? UIHighlight_Active : UIHighlight_None));
 	ARGB_Color back_color = fcolor_resolve(fcolor_id(defcolor_list_item, 0));
 
-	draw_rectangle_and_margin(app, region, roundness, back_color, margin_color, margin_width);
+	draw_rectangle_and_margin(app, region, roundness, back_color, margin_color, lister_margin);
 
-	region = rect_inner(region, margin_width);
+	region = rect_inner(region, lister_margin);
+	region = rect_inner(region, lister_inner_margin);
 
 	Rect_f32 prev_clip = draw_set_clip(app, region);
 
@@ -77,7 +80,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 		text_field_rect = pair.min;
 		list_rect = pair.max;
 
-		list_rect = rect_inner(list_rect, margin_width);
+		//list_rect = rect_inner(list_rect, margin_width);
 	}
 
 	{
@@ -165,7 +168,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 
 		Rect_f32 item_rect = Rf32(x, y);
 		if (item_rect.y0 > region.y1) { break; }
-		Rect_f32 item_inner = rect_inner(item_rect, margin_width);
+		Rect_f32 item_inner = rect_inner(item_rect, lister_item_margin);
 
 		b32 hovered = rect_contains_point(item_rect, m_p);
 		if (hovered) lister->hovered_index = node->raw_index;
@@ -188,7 +191,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 
 		f32 item_roundness = (f32)def_get_config_u64(app, vars_save_string_lit("lister_item_roundness"), 8);
 		draw_rectangle_fcolor(app, item_rect, item_roundness, get_item_margin_color(highlight));
-		draw_rectangle_fcolor(app, item_inner, item_roundness - margin_width, get_item_margin_color(highlight, 1));
+		draw_rectangle_fcolor(app, item_inner, item_roundness - lister_item_margin, get_item_margin_color(highlight, 1));
 
 		Fancy_Line line = {};
 		push_fancy_string(scratch, &line, fcolor_id(defcolor_text_default), node->string);
@@ -202,8 +205,112 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	draw_set_clip(app, prev_clip);
 }
 
+function String_Const_u8
+string_remove_last_word(String_Const_u8 str) {
+	i32 num_deleted_chars = 0;
+	b32 identifier_found = false;
+	for (;;) {
+		// scan unicode backwards to determine start byte
+		u64 i = str.size - 1;
+		for (; i > 0; --i) {
+			if (str.str[i] <= 0x7F || str.str[i] >= 0xC0) {
+				break;
+			}
+		}
+		Character_Consume_Result ch = utf8_consume(&str.str[i], str.size - i);
+		if (character_is_alpha_numeric(ch.codepoint) || !identifier_found) {
+			str = backspace_utf8(str);
+			num_deleted_chars++;
+			if (character_is_alpha_numeric(ch.codepoint)) {
+				identifier_found = true;
+			}
+		}
+		else {
+			if (num_deleted_chars == 0) {
+				str = backspace_utf8(str);
+				num_deleted_chars++;
+			}
+			break;
+		}
+	}
+	return str;
+}
+
+function void
+sc_lister_backspace_handler(Application_Links* app) {
+	View_ID view = get_active_view(app, Access_Always);
+	Lister* lister = view_get_lister(app, view);
+	if (lister != 0) {
+
+		User_Input input = get_current_input(app);
+
+		if (has_modifier(&input, KeyCode_Control)) {
+			String_Const_u8 text_field = lister->text_field.string;
+			String_Const_u8 new_hot = string_remove_last_word(text_field);
+			lister->text_field.size = new_hot.size;
+			lister->key_string.size = new_hot.size;
+		}
+		else {
+			lister->text_field.string = backspace_utf8(lister->text_field.string);
+			lister->key_string.string = backspace_utf8(lister->key_string.string);
+		}
+
+		lister->item_index = 0;
+		lister_zero_scroll(lister);
+		lister_update_filtered_list(app, lister);
+	}
+}
+
+function void
+sc_file_lister_backspace_handler(Application_Links* app) {
+	View_ID view = get_this_ctx_view(app, Access_Always);
+	Lister* lister = view_get_lister(app, view);
+	if (lister != 0) {
+		if (lister->text_field.size > 0) {
+			u8 last_char = lister->text_field.str[lister->text_field.size - 1];
+			lister->text_field.string = backspace_utf8(lister->text_field.string);
+			User_Input input = get_current_input(app);
+			b32 ctrl = has_modifier(&input, KeyCode_Control);
+			if (character_is_slash(last_char) || ctrl) {
+				String_Const_u8 text_field = lister->text_field.string;
+				String_Const_u8 new_hot = string_remove_last_folder(text_field);
+				lister->text_field.size = new_hot.size;
+				set_hot_directory(app, new_hot);
+				// TODO(allen): We have to protect against lister_call_refresh_handler
+				// changing the text_field here. Clean this up.
+				String_u8 dingus = lister->text_field;
+				lister_call_refresh_handler(app, lister);
+				lister->text_field = dingus;
+			}
+			else {
+				String_Const_u8 text_field = lister->text_field.string;
+				String_Const_u8 new_key = string_front_of_path(text_field);
+				lister_set_key(lister, new_key);
+			}
+
+			lister->item_index = 0;
+			lister_zero_scroll(lister);
+			lister_update_filtered_list(app, lister);
+		}
+	}
+}
+
+// need to forward declare these unfortunately since they are defined in 4coder_lists.cpp
+// which depends on our version of run_lister so it has to be below this.
+
+function void
+lister__backspace_text_field__file_path(Application_Links* app);
+function void
+lister__backspace_text_field__default(Application_Links* app);
+
 function Lister_Result
 run_lister(Application_Links* app, Lister* lister) {
+
+	if (lister->handlers.backspace == lister__backspace_text_field__file_path)
+		lister->handlers.backspace = sc_file_lister_backspace_handler;
+	else if (lister->handlers.backspace == lister__backspace_text_field__default)
+		lister->handlers.backspace = sc_lister_backspace_handler;
+
 	lister->filter_restore_point = begin_temp(lister->arena);
 	lister_update_filtered_list(app, lister);
 

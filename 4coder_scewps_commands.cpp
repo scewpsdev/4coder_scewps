@@ -41,9 +41,27 @@ CUSTOM_DOC("Deletes the selected range in rectangle mode.")
 CUSTOM_COMMAND_SIG(seek_beginning_of_line)
 CUSTOM_DOC("Seeks the cursor to the beginning of the visual line.")
 {
-	default_seek_beginning_of_line(app);
-
 	View_ID view = get_active_view(app, Access_ReadVisible);
+	Buffer_ID buffer = view_get_buffer(app, view, Access_ReadVisible);
+	i64 prev_cursor_pos = view_get_cursor_pos(app, view);
+
+	default_seek_beginning_of_line(app);
+	
+	i64 beginning_of_line = view_get_cursor_pos(app, view);
+	i64 new_pos = beginning_of_line;
+	for (;;) {
+		u8 c = buffer_get_char(app, buffer, new_pos);
+		if (c != ' ' && c != '\t') {
+			break;
+		}
+		new_pos++;
+	}
+	if (new_pos == prev_cursor_pos) {
+		new_pos = beginning_of_line;
+	}
+	view_set_cursor_and_preferred_x(app, view, seek_pos(new_pos));
+	no_mark_snap_to_cursor_if_shift(app, view);
+
 	Buffer_Scroll scroll = view_get_buffer_scroll(app, view);
 	scroll.target.pixel_shift.x = 0.0f;
 	view_set_buffer_scroll(app, view, scroll, SetBufferScroll_NoCursorChange);

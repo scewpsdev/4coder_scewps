@@ -366,7 +366,7 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	View_ID active_view = get_active_view(app, Access_Always);
 	b32 is_active_view = (active_view == view_id);
 
-	u64 margin_width = def_get_config_u64(app, vars_save_string_lit("margin_width"), 3);
+	u64 margin_width = def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
 	FColor margin_color = get_panel_margin_color(is_active_view ? UIHighlight_Active : UIHighlight_None);
 	Rect_f32 region = draw_background_and_margin(app, view_id, margin_color, fcolor_id(defcolor_back), f32(margin_width));
 	Rect_f32 prev_clip = draw_set_clip(app, region);
@@ -444,7 +444,7 @@ sc_buffer_region(Application_Links* app, View_ID view_id, Rect_f32 region) {
 	f32 digit_advance = metrics.decimal_digit_advance;
 
 	// NOTE(allen): margins
-	u64 margin_width = def_get_config_u64(app, vars_save_string_lit("margin_width"), 3);
+	u64 margin_width = def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
 	region = rect_inner(region, f32(margin_width));
 
 	// NOTE(allen): file bar

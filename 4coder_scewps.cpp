@@ -25,7 +25,8 @@
 		[X] move selected lines with alt
 		[X] block select
 		[X] slower autoscroll
-	[ ] hot reloading
+		[ ] fix alphanumeric boundary movement/deletion
+	[X] hot reloading
 		[X] config
 		[X] bindings
 		[X] themes
@@ -34,17 +35,11 @@
 	[ ] lister
 		[X] floating lister
 		[X] darken buffer behind lister
-		[ ] ctrl+backspace
-		[ ] backspace on path deletes whole directory
+		[X] ctrl+backspace
+		[X] backspace on path deletes whole directory
 		[ ] display keybindings on right
 		[ ] display commands as capitalized words
 		[ ] preselect last command (or put at top)
-	[ ] hex color preview
-	[ ] comment dividers
-	[ ] brace lines
-	[ ] highlight current parens
-	[ ] token occurance underline
-	[ ] todo buffer
 	[ ] language support
 		[ ] c++
 		[ ] 4coder
@@ -61,6 +56,12 @@
 		[ ] preview function signature
 		[ ] code peek
 		[ ] code index
+	[ ] hex color preview
+	[ ] comment dividers
+	[ ] brace lines
+	[ ] highlight current parens
+	[ ] token occurance underline
+	[ ] todo buffer
 	[ ] minimap
 	[ ] focus color theme
 	[ ] relative line numbers
@@ -73,12 +74,11 @@
 	- delete_rect: deletes text in block mode
 
 	Fixes:
-	- fixed seek_beginning_of_line: scrolls view to left side
+	- fixed seek_beginning_of_line: scrolls view to left side and toggles between first non-whitespace character and actual beginning
 	- fixed move_line_up: supports selections
 	- fixed move_line_down: supports selections
-	- fixed mouse_wheel_scroll: scrolls hovered view instead of active, doesn't switch to scrolled view
+	- fixed mouse_wheel_scroll: scrolls hovered view instead of active
 	- fixed selection being cancelled when opening command lister
-	- smooth and horizontal scroll fix by flyingsolomon
 
 
 */

@@ -91,6 +91,9 @@ default_flags_sh  = "-g";
 // Custom settings
 
 interpolate_cursor = true;
-margin_width = 3;
 lister_panel_roundness = 8;
 lister_item_roundness = 8;
+buffer_margin = 3;
+lister_margin = 3;
+lister_inner_margin = 3;
+lister_item_margin = 3;
