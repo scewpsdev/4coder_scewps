@@ -139,6 +139,6 @@ keys_code = {
     { "open_file_in_quotes",        "1", "Alt" },
     { "open_matching_file_cpp",     "2", "Alt" },
     { "write_zero_struct",          "0", "Control" },
-    { "jump_to_definition_at_cursor", "W", "Control" },
+    //{ "jump_to_definition_at_cursor", "W", "Control" },
 };
 

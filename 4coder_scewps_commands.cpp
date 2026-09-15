@@ -297,7 +297,7 @@ CUSTOM_DOC("Opens an interactive list of all registered themes.")
 {
 	Color_Table* color_table = sc_get_color_table_from_user(app);
 	if (color_table != 0) {
-		next_color_table = *color_table;
+		active_color_table = *color_table;
 	}
 }
 

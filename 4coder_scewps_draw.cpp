@@ -80,7 +80,8 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	// NOTE(allen): Token colorizing
 	Token_Array token_array = get_token_array_from_buffer(app, buffer);
 	if (token_array.tokens != 0) {
-		draw_cpp_token_colors(app, text_layout_id, &token_array);
+		//draw_cpp_token_colors(app, text_layout_id, &token_array);
+		F4_SyntaxHighlight(app, text_layout_id, &token_array);
 
 		// NOTE(allen): Scan for TODOs and NOTEs
 		b32 use_comment_keyword = def_get_config_b32(vars_save_string_lit("use_comment_keyword"));
@@ -92,6 +93,7 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 			draw_comment_highlights(app, buffer, text_layout_id, &token_array, pairs, ArrayCount(pairs));
 		}
 
+		#if 0
 		// TODO(allen): Put in 4coder_draw.cpp
 		// NOTE(allen): Color functions
 
@@ -110,6 +112,7 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 				paint_text_color(app, text_layout_id, Ii64_size(token->pos, token->size), argb);
 			}
 		}
+		#endif
 	}
 	else {
 		paint_text_color_fcolor(app, text_layout_id, visible_range, fcolor_id(defcolor_text_default));
@@ -262,14 +265,12 @@ sc_draw_file_bar(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face
 	}break;
 	}
 
-	/*
 	F4_Language* language = F4_LanguageFromBuffer(app, buffer);
 	if (language)
 	{
 		push_fancy_string(scratch, &list, base_color, S8Lit("   "));
-		push_fancy_string(scratch, &list, base_color, language->name);
+		push_fancy_string(scratch, &list, base_color, language->language_name);
 	}
-	*/
 
 	p = V2f32(bar.p1.x - 2 - get_fancy_line_width(app, face_id, &list), bar.p0.y + 2);
 	draw_fancy_line(app, face_id, fcolor_zero(), &list, p);

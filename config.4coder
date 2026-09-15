@@ -63,7 +63,7 @@ default_tab_width = 4;
 indent_clear_blank_lines = false;
 
 // Theme
-default_theme_name = "4coder";
+default_theme_name = "theme-4coder";
 
 // Font
 default_font_name = "C:/Windows/Fonts/consola.ttf";

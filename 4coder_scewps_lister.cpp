@@ -81,7 +81,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 		text_field_rect = pair.min;
 		list_rect = pair.max;
 		
-		if (lister->highlighted_node->description.size) {
+		if (lister->highlighted_node && lister->highlighted_node->description.size) {
 			pair = rect_split_top_bottom(list_rect, rect_height(list_rect) - text_field_height);
 			list_rect = pair.min;
 			status_bar_rect = pair.max;
@@ -117,7 +117,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 		}
 	}
 
-	if (lister->highlighted_node->description.size)
+	if (lister->highlighted_node && lister->highlighted_node->description.size)
 	{
 		Vec2_f32 p = V2f32(status_bar_rect.x0 + 3.f, status_bar_rect.y0 + 3);
 		Fancy_Line text_field = {};

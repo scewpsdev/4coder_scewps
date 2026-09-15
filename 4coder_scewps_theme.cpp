@@ -6,6 +6,7 @@
 
 function void
 copy_color_table(Color_Table src, Color_Table dst) {
+    Assert(src.count == dst.count);
 	for (i64 i = 0; i < src.count; i++) {
 		dst.arrays[i].count = src.arrays[i].count;
 		block_copy(dst.arrays[i].vals, src.arrays[i].vals, src.arrays[i].count * sizeof(ARGB_Color));
@@ -72,7 +73,7 @@ navigate_theme_lister(Application_Links* app, View_ID view, Lister* lister, i32 
 
     Color_Table* color_table = get_color_table_from_index(&global_theme_list, lister->item_index);
     if (color_table) {
-        next_color_table = *color_table;
+        active_color_table = *color_table;
     }
 }
 

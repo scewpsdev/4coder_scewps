@@ -1,11 +1,11 @@
 /*
- * Lister base
+ * Lister
  */
 
 // TOP
 
-#if !defined(FCODER_LISTER_BASE_H)
-#define FCODER_LISTER_BASE_H
+#if !defined(FCODER_SCEWPS_LISTER_H)
+#define FCODER_SCEWPS_LISTER_H
 
 typedef i32 Lister_Activation_Code;
 enum{

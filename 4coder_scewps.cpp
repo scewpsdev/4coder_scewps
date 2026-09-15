@@ -6,9 +6,11 @@
 
 	TODO
 
-	[ ] fix mouse scroll speed
-	[X] scroll quarter page
+	[ ] fix alphanumeric boundary movement/deletion
+	[ ] focus color theme
+	[ ] fix cursor disappearing bug
 	[ ] better bindings file syntax
+	[X] scroll quarter page
 	[X] cursor
 		[X] block cursor for notepad style
 		[X] smooth cursor
@@ -20,12 +22,11 @@
 		[X] side padding
 		[X] highlight line number at current line
 		[X] line numbers same background
-	[ ] editing
+	[X] editing
 		[X] proper home
 		[X] move selected lines with alt
 		[X] block select
 		[X] slower autoscroll
-		[ ] fix alphanumeric boundary movement/deletion
 	[X] hot reloading
 		[X] config
 		[X] bindings
@@ -42,29 +43,29 @@
 		[X] preselect last command (or put at top)
 		[X] lister description status bar
 	[ ] language support
-		[ ] c++
+		[X] c++
 		[ ] 4coder
-		[ ] snek
-		[ ] highlighting
-			[ ] function
-			[ ] type
-			[ ] operator
-			[ ] comments
-			[ ] numbers
-			[ ] strings
-			[ ] literals
+		[ ] glsl
+		[X] snek
+		[X] highlighting
+			[X] function
+			[X] type
+			[X] operator
+			[X] comments
+			[X] numbers
+			[X] strings
+			[X] literals
 		[ ] go to definition
 		[ ] preview function signature
 		[ ] code peek
 		[ ] code index
+	[X] highlight current parens
 	[ ] hex color preview
 	[ ] comment dividers
 	[ ] brace lines
-	[ ] highlight current parens
 	[ ] token occurance underline
 	[ ] todo buffer
 	[ ] minimap
-	[ ] focus color theme
 	[ ] relative line numbers
 	[ ] vim mode
 
@@ -90,6 +91,10 @@
 #define FCODER_DEFAULT_BINDINGS_CPP
 
 #include "4coder_scewps_include.h"
+#include "4coder_fleury_lang.h"
+#include "4coder_fleury_index.h"
+#include "4coder_fleury_ubiquitous.h"
+#include "4coder_fleury_colors.h"
 
 // custom globals
 global Rect_f32 current_cursor_rect;
@@ -99,18 +104,54 @@ global b32 cursor_blink_state;
 global u32 cursor_blink_idx;
 global b32 cursor_blink_paused;
 
+global f32 color_transition;
 global Color_Table current_color_table;
+global Color_Table last_color_table;
 global Color_Table next_color_table;
 
 global i32 lister_open;
 global View_ID lister_view;
 global Custom_Command_Function* last_used_command;
 
+global F4_Language_State f4_langs;
+
 #include "4coder_scewps_include.cpp"
 
 // NOTE(allen): Users can declare their own managed IDs here.
+CUSTOM_ID(colors, fleury_color_syntax_crap);
+CUSTOM_ID(colors, fleury_color_operators);
+CUSTOM_ID(colors, fleury_color_inactive_pane_overlay);
+CUSTOM_ID(colors, fleury_color_inactive_pane_background);
+CUSTOM_ID(colors, fleury_color_file_progress_bar);
+CUSTOM_ID(colors, fleury_color_brace_highlight);
+CUSTOM_ID(colors, fleury_color_brace_line);
+CUSTOM_ID(colors, fleury_color_brace_annotation);
+CUSTOM_ID(colors, fleury_color_index_sum_type);
+CUSTOM_ID(colors, fleury_color_index_product_type);
+CUSTOM_ID(colors, fleury_color_index_function);
+CUSTOM_ID(colors, fleury_color_index_macro);
+CUSTOM_ID(colors, fleury_color_index_constant);
+CUSTOM_ID(colors, fleury_color_index_comment_tag);
+CUSTOM_ID(colors, fleury_color_index_decl);
+CUSTOM_ID(colors, fleury_color_cursor_macro);
+CUSTOM_ID(colors, fleury_color_cursor_power_mode);
+CUSTOM_ID(colors, fleury_color_cursor_inactive);
+CUSTOM_ID(colors, fleury_color_plot_cycle);
+CUSTOM_ID(colors, fleury_color_token_highlight);
+CUSTOM_ID(colors, fleury_color_token_minor_highlight);
+CUSTOM_ID(colors, fleury_color_comment_user_name);
+CUSTOM_ID(colors, fleury_color_lego_grab);
+CUSTOM_ID(colors, fleury_color_lego_splat);
+CUSTOM_ID(colors, fleury_color_error_annotation);
 
 // custom files
+
+#include "4coder_fleury_lang.cpp"
+#include "4coder_fleury_index.cpp"
+#include "4coder_fleury_lang_list.h"
+#include "4coder_fleury_ubiquitous.cpp"
+#include "4coder_fleury_colors.cpp"
+
 #include "4coder_scewps_theme.cpp"
 #include "4coder_scewps_commands.cpp"
 #include "4coder_scewps_draw.cpp"
@@ -140,6 +181,7 @@ custom_layer_init(Application_Links* app) {
 	set_custom_hook(app, HookID_Layout, sc_layout);
 	set_custom_hook(app, HookID_BeginBuffer, sc_begin_buffer);
 	set_custom_hook(app, HookID_BufferRegion, sc_buffer_region);
+	set_custom_hook(app, HookID_BufferEditRange, sc_buffer_edit);
 	set_custom_hook(app, HookID_SaveFile, sc_file_save);
 
 	mapping_init(tctx, &framework_mapping);
@@ -155,6 +197,9 @@ custom_layer_init(Application_Links* app) {
 #endif
 
 	sc_setup_essential_mapping(&framework_mapping, global_map_id, file_map_id, code_map_id);
+
+	F4_Index_Initialize();
+	F4_RegisterLanguages();
 }
 
 #endif //FCODER_DEFAULT_BINDINGS
