@@ -15,6 +15,22 @@ CUSTOM_DOC("Default command for responding to a startup event")
 	current_color_table = init_color_table(app);
 	last_color_table = init_color_table(app);
 	next_color_table = init_color_table(app);
+
+	Scratch_Block scratch(app);
+	String_Const_u8 ui_font_name = def_get_config_string(scratch, vars_save_string_lit("ui_font_name"));
+
+	if (ui_font_name.size) {
+		u64 ui_font_size = def_get_config_u64(app, vars_save_string_lit("ui_font_size"), 15);
+
+		Face_Description desc = { 0 };
+		desc.font.file_name = ui_font_name;
+		desc.parameters.pt_size = (u32)ui_font_size;
+		desc.parameters.bold = 0;
+		desc.parameters.italic = 0;
+		desc.parameters.hinting = 0;
+
+		ui_font = try_create_new_face(app, &desc);
+	}
 }
 
 CUSTOM_COMMAND_SIG(sc_view_input_handler)
@@ -129,18 +145,20 @@ sc_tick(Application_Links* app, Frame_Info frame_info) {
 		for (i64 i = 0; i < active_color_table.count; i++) {
 			for (i64 j = 0; j < active_color_table.arrays[i].count; j++) {
 				ARGB_Color from_argb = last_color_table.arrays[i].vals[j % last_color_table.arrays[i].count];
+				if (!F4_ARGBIsValid(from_argb))
+					from_argb = fcolor_resolve(fcolor_id(defcolor_text_default));
+
 				ARGB_Color to_argb = next_color_table.arrays[i].vals[j];
-				if (F4_ARGBIsValid(from_argb) && F4_ARGBIsValid(to_argb)) {
-					Vec4_f32 from = unpack_color(from_argb);
-					Vec4_f32 to = unpack_color(to_argb);
+				if (!F4_ARGBIsValid(to_argb))
+					to_argb = fcolor_resolve(fcolor_id(defcolor_text_default));
 
-					Vec4_f32 result = lerp(from, to, color_transition);
-					ARGB_Color result_argb = pack_color(result);
+				Vec4_f32 from = unpack_color(from_argb);
+				Vec4_f32 to = unpack_color(to_argb);
 
-					active_color_table.arrays[i].vals[j] = result_argb;
-				} else {
-					active_color_table.arrays[i].vals[j] = to_argb;
-				}
+				Vec4_f32 result = lerp(from, to, color_transition);
+				ARGB_Color result_argb = pack_color(result);
+
+				active_color_table.arrays[i].vals[j] = result_argb;
 			}
 		}
 		
@@ -594,7 +612,7 @@ BUFFER_HOOK_SIG(sc_file_save) {
 		String_Const_u8 error_text = config_stringize_errors(app, scratch, config);
 		print_message(app, error_text);
 
-		copy_color_table(color_table, next_color_table);
+		active_color_table = color_table;
 
 	}
 	else if (string_match(name, string_u8_litexpr("config.4coder"))) {

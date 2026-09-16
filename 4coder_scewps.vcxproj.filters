@@ -18,5 +18,85 @@
     <ClCompile Include="4coder_scewps.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="languages\4coder_lang_cpp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="languages\4coder_lang_jai.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="languages\4coder_lang_metadesk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="languages\4coder_jai_lexer_gen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="languages\4coder_lang_snek.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="languages\4coder_snek_lexer_gen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_fleury_colors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_fleury_index.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_fleury_lang.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_fleury_ubiquitous.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_draw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_hooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_include.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_lister.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_theme.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="languages\4coder_config_4coder_lexer_gen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="languages\4coder_lang_config_4coder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="4coder_fleury_colors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="4coder_fleury_index.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="4coder_fleury_lang.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="4coder_fleury_lang_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="4coder_fleury_ubiquitous.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="4coder_scewps_include.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="4coder_scewps_lister.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

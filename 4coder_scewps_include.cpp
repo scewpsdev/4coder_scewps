@@ -74,23 +74,33 @@
 
 #include "4coder_scewps_lister.cpp"
 
+#define move_right_alpha_numeric_boundary default_move_right_alpha_numeric_boundary
+#define move_left_alpha_numeric_boundary default_move_left_alpha_numeric_boundary
+#define move_right_alpha_numeric_or_camel_boundary default_move_right_alpha_numeric_or_camel_boundary
+#define move_left_alpha_numeric_or_camel_boundary default_move_left_alpha_numeric_or_camel_boundary
 #define click_set_cursor_and_mark default_click_set_cursor_and_mark
 #define click_set_cursor default_click_set_cursor
 #define click_set_cursor_if_lbutton default_click_set_cursor_if_lbutton
-#define mouse_wheel_scroll_over_hovered_view default_mouse_wheel_scroll_over_hovered_view
 #define mouse_wheel_scroll default_mouse_wheel_scroll
 #define move_line_up default_move_line_up
 #define move_line_down default_move_line_down
+#define search default_search
+#define reverse_search default_reverse_search
 
 #include "4coder_base_commands.cpp"
 
+#undef move_right_alpha_numeric_boundary
+#undef move_left_alpha_numeric_boundary
+#undef move_right_alpha_numeric_or_camel_boundary
+#undef move_left_alpha_numeric_or_camel_boundary
 #undef click_set_cursor_and_mark
 #undef click_set_cursor
 #undef click_set_cursor_if_lbutton
-#undef mouse_wheel_scroll_over_hovered_view
 #undef mouse_wheel_scroll
 #undef move_line_up
 #undef move_line_down
+#undef search
+#undef reverse_search
 
 #include "4coder_insertion.cpp"
 #include "4coder_eol.cpp"
@@ -106,7 +116,11 @@
 #include "4coder_jumping.cpp"
 #include "4coder_jump_sticky.cpp"
 #include "4coder_jump_lister.cpp"
+
+#define jump_to_definition_at_cursor default_jump_to_definition_at_cursor
 #include "4coder_code_index_listers.cpp"
+#undef jump_to_definition_at_cursor
+
 #include "4coder_log_parser.cpp"
 #include "4coder_keyboard_macro.cpp"
 #include "4coder_cli_command.cpp"

@@ -6,10 +6,18 @@
 
 	TODO
 
-	[ ] fix alphanumeric boundary movement/deletion
+	[X] brace lines
+	[X] 4coder highlighting
+	[X] go to definition
+	[X] select + search -> insert string
+	[X] token occurance underline
+	[ ] error annotations
+	[X] ui font
+	[ ] autocomplete
 	[ ] focus color theme
-	[ ] fix cursor disappearing bug
 	[ ] better bindings file syntax
+	[X] fix cursor disappearing bug
+	[X] fix alphanumeric boundary movement/deletion
 	[X] scroll quarter page
 	[X] cursor
 		[X] block cursor for notepad style
@@ -44,8 +52,9 @@
 		[X] lister description status bar
 	[ ] language support
 		[X] c++
-		[ ] 4coder
+		[X] 4coder
 		[ ] glsl
+		[ ] batch
 		[X] snek
 		[X] highlighting
 			[X] function
@@ -55,15 +64,13 @@
 			[X] numbers
 			[X] strings
 			[X] literals
-		[ ] go to definition
+		[X] go to definition
 		[ ] preview function signature
 		[ ] code peek
-		[ ] code index
+		[X] code index
 	[X] highlight current parens
 	[ ] hex color preview
 	[ ] comment dividers
-	[ ] brace lines
-	[ ] token occurance underline
 	[ ] todo buffer
 	[ ] minimap
 	[ ] relative line numbers
@@ -74,6 +81,23 @@
 	- quarter_page_down
 	- quarter_page_up
 	- delete_rect: deletes text in block mode
+
+	Colors
+	- defcolor_line_numbers_highlight
+	- defcolor_brace_highlight
+	- defcolor_brace_line
+	- defcolor_symbol_highlight
+
+	Config settings:
+	- b32 interpolate_cursor
+	- u64 lister_panel_roundness
+	- u64 lister_item_roundness
+	- u64 buffer_margin
+	- u64 lister_margin
+	- u64 lister_inner_margin
+	- u64 lister_item_margin
+	- string ui_font_name
+	- u64 ui_font_size
 
 	Fixes:
 	- fixed seek_beginning_of_line: scrolls view to left side and toggles between first non-whitespace character and actual beginning
@@ -97,6 +121,8 @@
 #include "4coder_fleury_colors.h"
 
 // custom globals
+global Face_ID ui_font = 0;
+
 global Rect_f32 current_cursor_rect;
 global Rect_f32 next_cursor_rect;
 global f32 cursor_blink_acc;
@@ -118,6 +144,11 @@ global F4_Language_State f4_langs;
 #include "4coder_scewps_include.cpp"
 
 // NOTE(allen): Users can declare their own managed IDs here.
+CUSTOM_ID(colors, defcolor_line_numbers_highlight);
+CUSTOM_ID(colors, defcolor_brace_highlight);
+CUSTOM_ID(colors, defcolor_brace_line);
+CUSTOM_ID(colors, defcolor_symbol_highlight);
+
 CUSTOM_ID(colors, fleury_color_syntax_crap);
 CUSTOM_ID(colors, fleury_color_operators);
 CUSTOM_ID(colors, fleury_color_inactive_pane_overlay);

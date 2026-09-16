@@ -67,6 +67,93 @@ CUSTOM_DOC("Seeks the cursor to the beginning of the visual line.")
 	view_set_buffer_scroll(app, view, scroll, SetBufferScroll_NoCursorChange);
 }
 
+function i64
+token_boundary(Application_Links* app, Buffer_ID buffer, Side side, Scan_Direction direction, i64 pos) {
+	if (direction == Scan_Forward) {
+		u8 c = buffer_get_char(app, buffer, pos);
+		if (character_is_alpha_numeric(c) || c == '_') {
+			pos = boundary_alpha_numeric_underscore(app, buffer, side, direction, pos);
+		}
+		else {
+			pos++;
+		}
+		if (character_is_whitespace(buffer_get_char(app, buffer, pos))) {
+			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
+		}
+	} else {
+		if (character_is_whitespace(buffer_get_char(app, buffer, pos - 1))) {
+			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
+		}
+		u8 c = buffer_get_char(app, buffer, pos - 1);
+		if (character_is_alpha_numeric(c) || c == '_') {
+			pos = boundary_alpha_numeric_underscore(app, buffer, side, direction, pos);
+		} else {
+			pos--;
+		}
+	}
+	return pos;
+}
+
+function i64
+sub_token_boundary(Application_Links* app, Buffer_ID buffer, Side side, Scan_Direction direction, i64 pos) {
+	if (direction == Scan_Forward) {
+		u8 c = buffer_get_char(app, buffer, pos);
+		if (character_is_alpha_numeric(c)) {
+			pos = boundary_alpha_numeric_camel(app, buffer, side, direction, pos);
+		}
+		else {
+			pos++;
+		}
+		while (buffer_get_char(app, buffer, pos) == '_') {
+			pos++;
+		}
+		if (character_is_whitespace(buffer_get_char(app, buffer, pos))) {
+			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
+		}
+	}
+	else {
+		if (character_is_whitespace(buffer_get_char(app, buffer, pos - 1))) {
+			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
+		}
+		u8 c = buffer_get_char(app, buffer, pos - 1);
+		if (character_is_alpha_numeric(c) || c == '_') {
+			pos = boundary_alpha_numeric_camel(app, buffer, side, direction, pos);
+		}
+		else {
+			pos--;
+		}
+	}
+	return pos;
+}
+
+CUSTOM_COMMAND_SIG(move_right_alpha_numeric_boundary)
+CUSTOM_DOC("Seek right for boundary between alphanumeric characters and non-alphanumeric characters.")
+{
+	Scratch_Block scratch(app);
+	current_view_scan_move(app, Scan_Forward, push_boundary_list(scratch, token_boundary));
+}
+
+CUSTOM_COMMAND_SIG(move_left_alpha_numeric_boundary)
+CUSTOM_DOC("Seek left for boundary between alphanumeric characters and non-alphanumeric characters.")
+{
+	Scratch_Block scratch(app);
+	current_view_scan_move(app, Scan_Backward, push_boundary_list(scratch, token_boundary));
+}
+
+CUSTOM_COMMAND_SIG(move_right_alpha_numeric_or_camel_boundary)
+CUSTOM_DOC("Seek right for boundary between alphanumeric characters or camel case word and non-alphanumeric characters.")
+{
+	Scratch_Block scratch(app);
+	current_view_scan_move(app, Scan_Forward, push_boundary_list(scratch, sub_token_boundary));
+}
+
+CUSTOM_COMMAND_SIG(move_left_alpha_numeric_or_camel_boundary)
+CUSTOM_DOC("Seek left for boundary between alphanumeric characters or camel case word and non-alphanumeric characters.")
+{
+	Scratch_Block scratch(app);
+	current_view_scan_move(app, Scan_Backward, push_boundary_list(scratch, sub_token_boundary));
+}
+
 function void
 sc_activate_cursor(Application_Links* app) {
 	cursor_blink_state = 2;
@@ -97,7 +184,26 @@ CUSTOM_DOC("If the mouse left button is pressed, sets the cursor position to the
 CUSTOM_COMMAND_SIG(mouse_wheel_scroll)
 CUSTOM_DOC("Reads the scroll wheel value from the mouse state and scrolls the view currently under the mouse accordingly.")
 {
-	default_mouse_wheel_scroll_over_hovered_view(app);
+	Mouse_State mouse = get_mouse_state(app);
+	View_ID active_view = get_active_view(app, Access_ReadVisible);
+	if (mouse.wheel.y != 0.f || mouse.wheel.x != 0.f) {
+		for (View_ID view = get_view_next(app, 0, Access_ReadVisible);
+			view != 0;
+			view = get_view_next(app, view, Access_ReadVisible)) {
+			Rect_f32 view_rect = view_get_screen_rect(app, view);
+			if (rect_contains_point(view_rect, V2f32(mouse.p)))
+			{
+				Buffer_Scroll scroll = view_get_buffer_scroll(app, view);
+				scroll.target = view_move_buffer_point(app, view, scroll.target, mouse.wheel);
+				view_set_buffer_scroll(app, view, scroll, SetBufferScroll_SnapCursorIntoView);
+				active_view = view;
+				break;
+			}
+		}
+	}
+	if (mouse.l) {
+		no_mark_snap_to_cursor(app, active_view);
+	}
 }
 
 CUSTOM_COMMAND_SIG(quarter_page_down)
@@ -334,6 +440,287 @@ CUSTOM_DOC("Reloads bindings file")
 		String_ID code_map_id = vars_save_string_lit("keys_code");
 
 		sc_setup_essential_mapping(&framework_mapping, global_map_id, file_map_id, code_map_id);
+	}
+}
+
+CUSTOM_UI_COMMAND_SIG(jump_to_definition_at_cursor)
+CUSTOM_DOC("Jump to the first definition in the code index matching an identifier at the cursor")
+{
+	View_ID view = get_active_view(app, Access_ReadVisible);
+
+	if (view != 0) {
+		Scratch_Block scratch(app);
+		String_Const_u8 query = push_token_or_word_under_active_cursor(app, scratch);
+
+		F4_Index_Lock();
+
+		F4_Index_Note* note = F4_Index_LookupNote(query);
+		point_stack_push_view_cursor(app, view);
+		jump_to_location(app, view, note->file->buffer, note->range.min);
+		view_set_mark(app, view, seek_pos(note->range.min));
+
+		F4_Index_Unlock();
+	}
+}
+
+function void
+sc_isearch(Application_Links* app, Scan_Direction start_scan, i64 first_pos,
+	String_Const_u8 query_init) {
+	View_ID view = get_active_view(app, Access_ReadVisible);
+	Buffer_ID buffer = view_get_buffer(app, view, Access_ReadVisible);
+	if (!buffer_exists(app, buffer)) {
+		return;
+	}
+
+	i64 buffer_size = buffer_get_size(app, buffer);
+
+	Query_Bar_Group group(app);
+	Query_Bar bar = {};
+	if (start_query_bar(app, &bar, 0) == 0) {
+		return;
+	}
+
+	Vec2_f32 old_margin = {};
+	Vec2_f32 old_push_in = {};
+	view_get_camera_bounds(app, view, &old_margin, &old_push_in);
+
+	Vec2_f32 margin = old_margin;
+	margin.y = clamp_bot(200.f, margin.y);
+	view_set_camera_bounds(app, view, margin, old_push_in);
+
+	Scan_Direction scan = start_scan;
+	i64 pos = first_pos;
+
+	u8 bar_string_space[256];
+	bar.string = SCu8(bar_string_space, query_init.size);
+	block_copy(bar.string.str, query_init.str, query_init.size);
+
+	String_Const_u8 isearch_str = string_u8_litexpr("Search: ");
+	String_Const_u8 rsearch_str = string_u8_litexpr("Backwards Search: ");
+
+	u64 match_size = bar.string.size;
+
+	User_Input in = {};
+	for (;;) {
+		switch (scan) {
+		case Scan_Forward:
+		{
+			bar.prompt = isearch_str;
+		}break;
+		case Scan_Backward:
+		{
+			bar.prompt = rsearch_str;
+		}break;
+		}
+		isearch__update_highlight(app, view, Ii64_size(pos, match_size));
+
+		in = get_next_input(app, EventPropertyGroup_Any, 0/*EventProperty_Escape*/);
+		if (in.abort) {
+			break;
+		}
+
+		String_Const_u8 string = to_writable(&in);
+
+		b32 string_change = false;
+		if (match_key_code(&in, KeyCode_Escape)) {
+			Input_Modifier_Set* mods = &in.event.key.modifiers;
+			if (has_modifier(mods, KeyCode_Control)) {
+				bar.string.size = cstring_length(previous_isearch_query);
+				block_copy(bar.string.str, previous_isearch_query, bar.string.size);
+			}
+			else {
+				u64 size = bar.string.size;
+				size = clamp_top(size, sizeof(previous_isearch_query) - 1);
+				block_copy(previous_isearch_query, bar.string.str, size);
+				previous_isearch_query[size] = 0;
+				break;
+			}
+		}
+		else if (string.str != 0 && string.size > 0) {
+			String_u8 bar_string = Su8(bar.string, sizeof(bar_string_space));
+			string_append(&bar_string, string);
+			bar.string = bar_string.string;
+			string_change = true;
+		}
+		else if (match_key_code(&in, KeyCode_Backspace)) {
+			if (is_unmodified_key(&in.event)) {
+				u64 old_bar_string_size = bar.string.size;
+				bar.string = backspace_utf8(bar.string);
+				string_change = (bar.string.size < old_bar_string_size);
+			}
+			else if (has_modifier(&in.event.key.modifiers, KeyCode_Control)) {
+				if (bar.string.size > 0) {
+					string_change = true;
+					bar.string.size = 0;
+				}
+			}
+		}
+
+		b32 do_scan_action = false;
+		b32 do_scroll_wheel = false;
+		Scan_Direction change_scan = scan;
+		if (!string_change) {
+			if (match_key_code(&in, KeyCode_PageDown) ||
+				match_key_code(&in, KeyCode_Down) ||
+				match_key_code(&in, KeyCode_Return) && !has_modifier(&in.event.key.modifiers, KeyCode_Shift)) {
+				change_scan = Scan_Forward;
+				do_scan_action = true;
+			}
+			else if (match_key_code(&in, KeyCode_PageUp) ||
+				match_key_code(&in, KeyCode_Up) ||
+				match_key_code(&in, KeyCode_Return) && has_modifier(&in.event.key.modifiers, KeyCode_Shift)) {
+				change_scan = Scan_Backward;
+				do_scan_action = true;
+			}
+			else {
+				// NOTE(allen): is the user trying to execute another command?
+				View_Context ctx = view_current_context(app, view);
+				Mapping* mapping = ctx.mapping;
+				Command_Map* map = mapping_get_map(mapping, ctx.map_id);
+				Command_Binding binding = map_get_binding_recursive(mapping, map, &in.event);
+				if (binding.custom != 0) {
+					if (binding.custom == search) {
+						change_scan = Scan_Forward;
+						do_scan_action = true;
+					}
+					else if (binding.custom == reverse_search) {
+						change_scan = Scan_Backward;
+						do_scan_action = true;
+					}
+					else {
+						Command_Metadata* metadata = get_command_metadata(binding.custom);
+						if (metadata != 0) {
+							if (metadata->is_ui) {
+								view_enqueue_command_function(app, view, binding.custom);
+								break;
+							}
+						}
+						binding.custom(app);
+					}
+				}
+				else {
+					leave_current_input_unhandled(app);
+				}
+			}
+		}
+
+		if (string_change) {
+			switch (scan) {
+			case Scan_Forward:
+			{
+				i64 new_pos = 0;
+				seek_string_insensitive_forward(app, buffer, pos - 1, 0, bar.string, &new_pos);
+				if (new_pos < buffer_size) {
+					pos = new_pos;
+					match_size = bar.string.size;
+				}
+			}break;
+
+			case Scan_Backward:
+			{
+				i64 new_pos = 0;
+				seek_string_insensitive_backward(app, buffer, pos + 1, 0, bar.string, &new_pos);
+				if (new_pos >= 0) {
+					pos = new_pos;
+					match_size = bar.string.size;
+				}
+			}break;
+			}
+		}
+		else if (do_scan_action) {
+			scan = change_scan;
+			switch (scan) {
+			case Scan_Forward:
+			{
+				i64 new_pos = 0;
+				seek_string_insensitive_forward(app, buffer, pos, 0, bar.string, &new_pos);
+				if (new_pos < buffer_size) {
+					pos = new_pos;
+					match_size = bar.string.size;
+				}
+			}break;
+
+			case Scan_Backward:
+			{
+				i64 new_pos = 0;
+				seek_string_insensitive_backward(app, buffer, pos, 0, bar.string, &new_pos);
+				if (new_pos >= 0) {
+					pos = new_pos;
+					match_size = bar.string.size;
+				}
+			}break;
+			}
+		}
+		else if (do_scroll_wheel) {
+			mouse_wheel_scroll(app);
+		}
+	}
+
+	view_disable_highlight_range(app, view);
+
+	if (in.abort) {
+		u64 size = bar.string.size;
+		size = clamp_top(size, sizeof(previous_isearch_query) - 1);
+		block_copy(previous_isearch_query, bar.string.str, size);
+		previous_isearch_query[size] = 0;
+		view_set_cursor_and_preferred_x(app, view, seek_pos(first_pos));
+	}
+
+	view_set_camera_bounds(app, view, old_margin, old_push_in);
+}
+
+function void
+sc_isearch(Application_Links* app, Scan_Direction start_scan, String_Const_u8 query_init) {
+	View_ID view = get_active_view(app, Access_ReadVisible);
+	i64 pos = view_get_cursor_pos(app, view);;
+	sc_isearch(app, start_scan, pos, query_init);
+}
+
+function void
+sc_isearch(Application_Links* app, Scan_Direction start_scan) {
+	View_ID view = get_active_view(app, Access_ReadVisible);
+	i64 pos = view_get_cursor_pos(app, view);;
+	sc_isearch(app, start_scan, pos, SCu8());
+}
+
+CUSTOM_COMMAND_SIG(search)
+CUSTOM_DOC("Begins an incremental search down through the current buffer for a user specified string.")
+{
+	View_ID view = get_active_view(app, Access_ReadVisible);
+
+	i64 cursor_pos = view_get_cursor_pos(app, view);
+	i64 mark_pos = view_get_mark_pos(app, view);
+
+	if (cursor_pos != mark_pos) {
+		Buffer_ID buffer = view_get_buffer(app, view, Access_ReadVisible);
+		
+		Scratch_Block scratch(app);
+		String_Const_u8 identifier = push_buffer_range(app, scratch, buffer, Ii64(cursor_pos, mark_pos));
+
+		sc_isearch(app, Scan_Forward, Min(cursor_pos, mark_pos), identifier);
+	} else {
+		sc_isearch(app, Scan_Forward);
+	}
+}
+
+CUSTOM_COMMAND_SIG(reverse_search)
+CUSTOM_DOC("Begins an incremental search up through the current buffer for a user specified string.")
+{
+	View_ID view = get_active_view(app, Access_ReadVisible);
+
+	i64 cursor_pos = view_get_cursor_pos(app, view);
+	i64 mark_pos = view_get_mark_pos(app, view);
+
+	if (cursor_pos != mark_pos && fcoder_mode == FCoderMode_NotepadLike) {
+		Buffer_ID buffer = view_get_buffer(app, view, Access_ReadVisible);
+
+		Scratch_Block scratch(app);
+		String_Const_u8 identifier = push_buffer_range(app, scratch, buffer, Ii64(cursor_pos, mark_pos));
+
+		sc_isearch(app, Scan_Backward, Min(cursor_pos, mark_pos), identifier);
+	}
+	else {
+		sc_isearch(app, Scan_Backward);
 	}
 }
 

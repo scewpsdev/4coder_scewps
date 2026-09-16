@@ -8,10 +8,13 @@
 #include "generated/lexer_jai.cpp"
 #include "generated/lexer_snek.h"
 #include "generated/lexer_snek.cpp"
-#include "languages/4coder_fleury_lang_cpp.cpp"
-#include "languages/4coder_fleury_lang_jai.cpp"
-#include "languages/4coder_fleury_lang_metadesk.cpp"
+#include "generated/lexer_config_4coder.h"
+#include "generated/lexer_config_4coder.cpp"
+#include "languages/4coder_lang_cpp.cpp"
+#include "languages/4coder_lang_jai.cpp"
+#include "languages/4coder_lang_metadesk.cpp"
 #include "languages/4coder_lang_snek.cpp"
+#include "languages/4coder_lang_config_4coder.cpp"
 
 // NOTE(rjf): @f4_register_languages Register languages.
 function void
@@ -87,6 +90,18 @@ F4_RegisterLanguages(void)
                                 Snek_Highlight,
                                 Lex_State_Snek);
         }
+    }
+
+    // 4coder
+    {
+        F4_RegisterLanguage(S8Lit("4coder"),
+            S8Lit("4Coder Config"),
+            Config4Coder_IndexFile,
+            lex_full_input_config_4coder_init,
+            lex_full_input_config_4coder_breaks,
+            Config4Coder_PosContext,
+            Config4Coder_Highlight,
+            Lex_State_Config4Coder);
     }
 }
 

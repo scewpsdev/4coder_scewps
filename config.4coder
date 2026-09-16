@@ -54,7 +54,7 @@ automatically_indent_text_on_save = true;
 automatically_save_changes_on_build = true;
 
 // Load project on startup
-automatically_load_project = false;
+automatically_load_project = true;
 
 // Indentation
 indent_with_tabs = true;
@@ -63,7 +63,7 @@ default_tab_width = 4;
 indent_clear_blank_lines = false;
 
 // Theme
-default_theme_name = "theme-4coder";
+default_theme_name = "theme-tokyo-night";
 
 // Font
 default_font_name = "C:/Windows/Fonts/consola.ttf";
@@ -97,3 +97,6 @@ buffer_margin = 3;
 lister_margin = 3;
 lister_inner_margin = 3;
 lister_item_margin = 3;
+
+//ui_font_name = "C:/Windows/Fonts/segoeui.ttf";
+//ui_font_size = 15;

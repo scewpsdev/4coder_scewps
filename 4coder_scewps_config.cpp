@@ -32,6 +32,18 @@ sc_setup_essential_mapping(Mapping* mapping, i64 global_id, i64 file_id, i64 cod
 ////////////////////////////////
 // NOTE(allen): Config Variables Read
 
+function b32
+def_get_config_b32(String_ID key, b32 default_value) {
+    Variable_Handle var = def_get_config_var(key);
+    if (vars_is_nil(var)) {
+        return default_value;
+    } else {
+        String_ID val = vars_string_id_from_var(var);
+        b32 result = (val != 0 && val != vars_save_string_lit("false"));
+        return(result);
+    }
+}
+
 function u64
 def_get_config_u64(Application_Links *app, String_ID key, u64 default_value) {
     Scratch_Block scratch(app);
