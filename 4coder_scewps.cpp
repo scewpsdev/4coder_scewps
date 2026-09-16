@@ -11,10 +11,11 @@
 	[X] go to definition
 	[X] select + search -> insert string
 	[X] token occurance underline
+	[ ] focus color theme
 	[ ] error annotations
+	[ ] stop seek next identifier at beginning or end of line
 	[X] ui font
 	[ ] autocomplete
-	[ ] focus color theme
 	[ ] better bindings file syntax
 	[X] fix cursor disappearing bug
 	[X] fix alphanumeric boundary movement/deletion

@@ -60,18 +60,18 @@ sc_draw_line_highlight(Application_Links* app, Text_Layout_ID layout, Face_ID fa
 }
 
 function void
-draw_brace_highlight(Application_Links* app, Buffer_ID buffer, Text_Layout_ID layout, i64 pos, ARGB_Color* colors, i32 color_count) {
+highlight_enclosure_characters(Application_Links* app, Buffer_ID buffer, Text_Layout_ID layout, i64 pos, Token_Base_Kind openKind, Token_Base_Kind closeKind, Find_Nest_Flag findNestFlag, ARGB_Color* colors, i32 color_count) {
 	Token_Array token_array = get_token_array_from_buffer(app, buffer);
 	if (token_array.tokens != 0) {
 		Token_Iterator_Array it = token_iterator_pos(0, &token_array, pos);
 		Token* token = token_it_read(&it);
-		if (token != 0 && token->kind == TokenBaseKind_ScopeOpen) {
+		if (token != 0 && token->kind == openKind) {
 			pos = token->pos + token->size;
 		}
 		else {
 			if (token_it_dec_all(&it)) {
 				token = token_it_read(&it);
-				if (token->kind == TokenBaseKind_ScopeClose &&
+				if (token->kind == closeKind &&
 					pos == token->pos + token->size) {
 					pos = token->pos;
 				}
@@ -79,8 +79,8 @@ draw_brace_highlight(Application_Links* app, Buffer_ID buffer, Text_Layout_ID la
 		}
 	}
 	draw_enclosures(app, layout, buffer,
-		pos, FindNest_Scope, RangeHighlightKind_CharacterHighlight,
-		0, 0, colors, color_count);
+		pos, findNestFlag, RangeHighlightKind_CharacterHighlight,
+		colors, color_count, 0, 0);
 }
 
 function void
@@ -296,6 +296,38 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 
 	// error annotations
 
+	// brace lines
+	b32 brace_lines = def_get_config_b32(vars_save_string_lit("draw_brace_lines"), true);
+	if (brace_lines) {
+		Color_Array colors = finalize_color_array(defcolor_brace_line);
+		draw_brace_lines(app, buffer, text_layout_id, rect, metrics, cursor_pos, colors.vals, colors.count);
+	}
+
+	// token occurance
+	b32 enable_highlight_hovered_symbol = def_get_config_b32(vars_save_string_lit("enable_highlight_hovered_symbol"), true);
+	if (enable_highlight_hovered_symbol) {
+		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_symbol_highlight));
+		highlight_hovered_symbol(app, view_id, buffer, text_layout_id, cursor_pos, &token_array, color);
+	}
+
+	// Color braces
+	b32 use_brace_helper = def_get_config_b32(vars_save_string_lit("use_brace_helper"), true);
+	if (use_brace_helper) {
+		Color_Array colors = finalize_color_array(defcolor_brace_highlight);
+		highlight_enclosure_characters(app, buffer, text_layout_id, cursor_pos,
+			TokenBaseKind_ScopeOpen, TokenBaseKind_ScopeClose, FindNest_Scope,
+			colors.vals, colors.count);
+	}
+
+	// NOTE(allen): Color parens
+	b32 use_paren_helper = def_get_config_b32(vars_save_string_lit("use_paren_helper"));
+	if (use_paren_helper) {
+		Color_Array colors = finalize_color_array(defcolor_text_cycle);
+		highlight_enclosure_characters(app, buffer, text_layout_id, cursor_pos, 
+			TokenBaseKind_ParentheticalOpen, TokenBaseKind_ParentheticalClose, FindNest_Paren,
+			colors.vals, colors.count);
+	}
+
 	// NOTE(allen): Cursor
 	switch (fcoder_mode) {
 	case FCoderMode_Original:
@@ -312,39 +344,11 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	}break;
 	}
 
-	// Color braces
-	b32 use_brace_helper = def_get_config_b32(vars_save_string_lit("use_brace_helper"), true);
-	if (use_brace_helper) {
-		Color_Array colors = finalize_color_array(defcolor_brace_highlight);
-		draw_brace_highlight(app, buffer, text_layout_id, cursor_pos, colors.vals, colors.count);
-	}
-
-	// NOTE(allen): Color parens
-	b32 use_paren_helper = def_get_config_b32(vars_save_string_lit("use_paren_helper"));
-	if (use_paren_helper) {
-		Color_Array colors = finalize_color_array(defcolor_text_cycle);
-		draw_paren_highlight(app, buffer, text_layout_id, cursor_pos, colors.vals, colors.count);
-	}
-
 	// NOTE(allen): Fade ranges
 	paint_fade_ranges(app, text_layout_id, buffer);
 
 	// NOTE(allen): put the actual text on the actual screen
 	draw_text_layout_default(app, text_layout_id);
-
-	// brace lines
-	b32 brace_lines = def_get_config_b32(vars_save_string_lit("draw_brace_lines"), true);
-	if (brace_lines) {
-		Color_Array colors = finalize_color_array(defcolor_brace_line);
-		draw_brace_lines(app, buffer, text_layout_id, rect, metrics, cursor_pos, colors.vals, colors.count);
-	}
-
-	// token occurance
-	b32 enable_highlight_hovered_symbol = def_get_config_b32(vars_save_string_lit("enable_highlight_hovered_symbol"), true);
-	if (enable_highlight_hovered_symbol) {
-		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_symbol_highlight));
-		highlight_hovered_symbol(app, view_id, buffer, text_layout_id, cursor_pos, &token_array, color);
-	}
 
 	draw_set_clip(app, prev_clip);
 

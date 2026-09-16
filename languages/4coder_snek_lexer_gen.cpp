@@ -173,6 +173,8 @@ build_language_model(void)
     sm_key("UShort");
     sm_key("Long");
     sm_key("ULong");
+    sm_key("Char");
+    sm_key("Byte");
     sm_key("UInt8");
     sm_key("UInt16");
     sm_key("UInt32");

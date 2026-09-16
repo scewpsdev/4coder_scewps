@@ -58,7 +58,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	f32 roundness = (f32)def_get_config_u64(app, vars_save_string_lit("lister_panel_roundness"), 8);
 
 	ARGB_Color margin_color = fcolor_resolve(get_panel_margin_color(is_active_view ? UIHighlight_Active : UIHighlight_None));
-	ARGB_Color back_color = fcolor_resolve(fcolor_id(defcolor_list_item, 0));
+	ARGB_Color back_color = fcolor_resolve(fcolor_id(defcolor_back, 0));
 
 	draw_rectangle_and_margin(app, region, roundness, back_color, margin_color, lister_margin);
 
@@ -223,7 +223,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 		push_fancy_string(scratch, &line, fcolor_id(defcolor_text_default), node->string);
 		//push_fancy_stringf(scratch, &line, " ");
 
-		Vec2_f32 p = item_inner.p0 + V2f32(3.f, (block_height - line_height) * 0.5f);
+		Vec2_f32 p = item_inner.p0 + V2f32(4, (block_height - metrics.text_height) * 0.5f);
 		draw_fancy_line(app, face_id, fcolor_zero(), &line, p);
 
 		f32 space_left = rect_width(item_inner) - 3 * 2 - get_fancy_line_width(app, face_id, &line) - line_height;
@@ -231,7 +231,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 		line = {};
 		push_fancy_string(scratch, &line, fcolor_id(defcolor_pop2), node->status);
 
-		p = V2f32(item_inner.x1 - 3 - Min(get_fancy_line_width(app, face_id, &line), space_left), item_inner.y0 + (block_height - line_height) * 0.5f);
+		p = V2f32(item_inner.x1 - 4 - Min(get_fancy_line_width(app, face_id, &line), space_left), item_inner.y0 + (block_height - metrics.text_height) * 0.5f);
 		draw_fancy_line(app, face_id, fcolor_zero(), &line, p);
 	}
 
