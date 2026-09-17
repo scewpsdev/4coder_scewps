@@ -93,10 +93,11 @@ default_flags_sh  = "-g";
 
 // focus style settings
 interpolate_cursor = false;
-cursor_roundness = 0;
+//cursor_roundness = 0;
+file_margin = 1;
+lister_item_height = 120;
 lister_panel_roundness = 8;
 lister_item_roundness = 0;
-file_margin = 0;
 lister_margin = 0;
 lister_inner_margin = 0;
 lister_item_margin = 0;

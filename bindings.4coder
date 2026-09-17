@@ -58,20 +58,25 @@ keys_file = {
     { "page_down",              "PageDown" },
     { "goto_beginning_of_file", "Home", "Control" },
     { "goto_end_of_file",       "End", "Control" },
-    //{ "move_up_to_blank_line_end",        "Up", "Control" },
+	
+	//{ "move_up_to_blank_line_end",        "Up", "Control" },
     //{ "move_down_to_blank_line_end",      "Down", "Control" },
-    //{ "move_left_whitespace_boundary",    "Left", "Control" },
+	//{ "move_left_whitespace_boundary",    "Left", "Control" },
     //{ "move_right_whitespace_boundary",   "Right", "Control" },
 	{ "move_left_alpha_numeric_boundary",           "Left", "Control" },
     { "move_right_alpha_numeric_boundary",          "Right", "Control" },
-	{ "move_left_alpha_numeric_or_camel_boundary",  "Left", "Alt" },
+    { "move_left_alpha_numeric_or_camel_boundary",  "Left", "Alt" },
     { "move_right_alpha_numeric_or_camel_boundary", "Right", "Alt" },
+	{ "quarter_page_up",        "Up", "Control" },
+    { "quarter_page_down",      "Down", "Control" },
     { "move_line_up",                     "Up", "Alt" },
     { "move_line_down",                   "Down", "Alt" },
+	
     { "backspace_alpha_numeric_boundary", "Backspace", "Control" },
     { "delete_alpha_numeric_boundary",    "Delete", "Control" },
-    { "snipe_backward_whitespace_or_token_boundary", "Backspace", "Alt" },
-    { "snipe_forward_whitespace_or_token_boundary",  "Delete", "Alt" },
+    { "backspace_alpha_numeric_or_camel_boundary", "Backspace", "Alt" },
+    { "delete_alpha_numeric_or_camel_boundary",  "Delete", "Alt" },
+	
     { "set_mark",                    "Space", "Control" },
     //{ "replace_in_range",            "A", "Control" },
     { "copy",                        "C", "Control" },
@@ -108,9 +113,9 @@ keys_file = {
     { "if_read_only_goto_position_same_panel", "Return", "Shift" },
     { "view_jump_list_with_lister",  "Period", "Control", "Shift" },
 	
+	{ "word_complete",              "Tab" },
+	
 	{ "delete_rect",              "Delete", "Shift", "Alt" },
-	{ "quarter_page_up",        "Up", "Control" },
-    { "quarter_page_down",      "Down", "Control" },
 };
 
 keys_code = {
@@ -119,7 +124,7 @@ keys_code = {
     { "move_left_alpha_numeric_or_camel_boundary",  "Left", "Alt" },
     { "move_right_alpha_numeric_or_camel_boundary", "Right", "Alt" },
     { "comment_line_toggle",        "Semicolon", "Control" },
-    { "word_complete",              "Tab" },
+    //{ "word_complete",              "Tab" },
     //{ "word_complete_prev",         "Tab", "Shift" },
     //{ "auto_indent_range",          "Tab", "Control" },
     //{ "word_complete_drop_down",    "Tab", "Shift", "Control" },
@@ -144,5 +149,6 @@ keys_code = {
     { "open_matching_file_cpp",     "2", "Alt" },
     { "write_zero_struct",          "0", "Control" },
     { "jump_to_definition_at_cursor", "F12"},
+    { "jump_to_definition_at_cursor_other_panel", "F12", "Shift"},
 };
 

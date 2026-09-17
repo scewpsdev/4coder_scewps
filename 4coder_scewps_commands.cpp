@@ -68,25 +68,74 @@ CUSTOM_DOC("Seeks the cursor to the beginning of the visual line.")
 }
 
 function i64
+boundary_character(Application_Links* app, Buffer_ID buffer, Scan_Direction direction, i64 pos, b32(*func)(u8)) {
+	if (direction == Scan_Forward) {
+		while (func(buffer_get_char(app, buffer, pos)))
+			pos++;
+	} else {
+		while (func(buffer_get_char(app, buffer, pos - 1)))
+			pos--;
+	}
+	return pos;
+}
+
+function i64
+boundary_alpha_numeric_underscore_camel_not_newline(Application_Links* app, Buffer_ID buffer, Scan_Direction direction, i64 pos) {
+	if (direction == Scan_Forward) {
+		b32 last_lowercase = false;
+		u8 c;
+		while (is_alpha_numeric_underscore_not_newline(c = buffer_get_char(app, buffer, pos)) && !is_newline(c) && (!last_lowercase || !character_is_upper(c))) {
+			pos++;
+			if (character_is_lower(c))
+				last_lowercase = true;
+		}
+	} else {
+		u8 c;
+		while (is_alpha_numeric_underscore_not_newline(c = buffer_get_char(app, buffer, pos - 1)) && !is_newline(c)) {
+			pos--;
+			if (character_is_upper(c))
+				break;
+		}
+	}
+	return pos;
+}
+
+function i64
+skip_past(Application_Links* app, Buffer_ID buffer, Scan_Direction direction, i64 pos, u8 stop_char) {
+	if (direction == Scan_Forward) {
+		u8 c;
+		do {
+			c = buffer_get_char(app, buffer, pos++);
+		} while (c != stop_char);
+	} else {
+		u8 c;
+		do {
+			c = buffer_get_char(app, buffer, --pos);
+		} while (c != stop_char);
+	}
+	return pos;
+}
+
+function i64
 token_boundary(Application_Links* app, Buffer_ID buffer, Side side, Scan_Direction direction, i64 pos) {
 	if (direction == Scan_Forward) {
 		u8 c = buffer_get_char(app, buffer, pos);
-		if (character_is_alpha_numeric(c) || c == '_') {
-			pos = boundary_alpha_numeric_underscore(app, buffer, side, direction, pos);
-		}
-		else {
+		if (is_alpha_numeric_underscore_not_newline(c)) {
+			pos = boundary_character(app, buffer, direction, pos, is_alpha_numeric_underscore_not_newline);
+		} else if (is_newline(c)) {
+			pos = skip_past(app, buffer, direction, pos, '\n');
+		} else {
 			pos++;
 		}
-		if (character_is_whitespace(buffer_get_char(app, buffer, pos))) {
-			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
-		}
+		pos = boundary_character(app, buffer, direction, pos, is_whitespace_not_newline);
 	} else {
-		if (character_is_whitespace(buffer_get_char(app, buffer, pos - 1))) {
-			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
-		}
 		u8 c = buffer_get_char(app, buffer, pos - 1);
-		if (character_is_alpha_numeric(c) || c == '_') {
-			pos = boundary_alpha_numeric_underscore(app, buffer, side, direction, pos);
+		if (is_newline(c)) {
+			pos = skip_past(app, buffer, direction, pos, '\n');
+		}
+		pos = boundary_character(app, buffer, direction, pos, is_whitespace_not_newline);
+		if (is_alpha_numeric_underscore_not_newline(buffer_get_char(app, buffer, pos - 1))) {
+			pos = boundary_character(app, buffer, direction, pos, is_alpha_numeric_underscore_not_newline);
 		} else {
 			pos--;
 		}
@@ -98,28 +147,23 @@ function i64
 sub_token_boundary(Application_Links* app, Buffer_ID buffer, Side side, Scan_Direction direction, i64 pos) {
 	if (direction == Scan_Forward) {
 		u8 c = buffer_get_char(app, buffer, pos);
-		if (character_is_alpha_numeric(c)) {
-			pos = boundary_alpha_numeric_camel(app, buffer, side, direction, pos);
-		}
-		else {
+		if (is_alpha_numeric_underscore_not_newline(c)) {
+			pos = boundary_alpha_numeric_underscore_camel_not_newline(app, buffer, direction, pos);
+		} else if (is_newline(c)) {
+			pos = skip_past(app, buffer, direction, pos, '\n');
+		} else {
 			pos++;
 		}
-		while (buffer_get_char(app, buffer, pos) == '_') {
-			pos++;
-		}
-		if (character_is_whitespace(buffer_get_char(app, buffer, pos))) {
-			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
-		}
-	}
-	else {
-		if (character_is_whitespace(buffer_get_char(app, buffer, pos - 1))) {
-			pos = boundary_predicate(app, buffer, side, direction, pos, &character_predicate_whitespace);
-		}
+		pos = boundary_character(app, buffer, direction, pos, is_whitespace_not_newline);
+	} else {
 		u8 c = buffer_get_char(app, buffer, pos - 1);
-		if (character_is_alpha_numeric(c) || c == '_') {
-			pos = boundary_alpha_numeric_camel(app, buffer, side, direction, pos);
+		if (is_newline(c)) {
+			pos = skip_past(app, buffer, direction, pos, '\n');
 		}
-		else {
+		pos = boundary_character(app, buffer, direction, pos, is_whitespace_not_newline);
+		if (is_alpha_numeric_underscore_not_newline(buffer_get_char(app, buffer, pos - 1))) {
+			pos = boundary_alpha_numeric_underscore_camel_not_newline(app, buffer, direction, pos);
+		} else {
 			pos--;
 		}
 	}
@@ -153,6 +197,39 @@ CUSTOM_DOC("Seek left for boundary between alphanumeric characters or camel case
 	Scratch_Block scratch(app);
 	current_view_scan_move(app, Scan_Backward, push_boundary_list(scratch, sub_token_boundary));
 }
+
+CUSTOM_COMMAND_SIG(backspace_alpha_numeric_boundary)
+CUSTOM_DOC("Delete characters between the cursor position and the first alphanumeric boundary to the left.")
+{
+	Scratch_Block scratch(app);
+	current_view_boundary_delete(app, Scan_Backward,
+		push_boundary_list(scratch, token_boundary));
+}
+
+CUSTOM_COMMAND_SIG(delete_alpha_numeric_boundary)
+CUSTOM_DOC("Delete characters between the cursor position and the first alphanumeric boundary to the right.")
+{
+	Scratch_Block scratch(app);
+	current_view_boundary_delete(app, Scan_Forward,
+		push_boundary_list(scratch, token_boundary));
+}
+
+CUSTOM_COMMAND_SIG(backspace_alpha_numeric_or_camel_boundary)
+CUSTOM_DOC("Delete characters between the cursor position and the first alphanumeric boundary to the left.")
+{
+	Scratch_Block scratch(app);
+	current_view_boundary_delete(app, Scan_Backward,
+		push_boundary_list(scratch, sub_token_boundary));
+}
+
+CUSTOM_COMMAND_SIG(delete_alpha_numeric_or_camel_boundary)
+CUSTOM_DOC("Delete characters between the cursor position and the first alphanumeric boundary to the right.")
+{
+	Scratch_Block scratch(app);
+	current_view_boundary_delete(app, Scan_Forward,
+		push_boundary_list(scratch, sub_token_boundary));
+}
+
 
 function void
 sc_activate_cursor(Application_Links* app) {
@@ -458,6 +535,27 @@ CUSTOM_DOC("Jump to the first definition in the code index matching an identifie
 		point_stack_push_view_cursor(app, view);
 		jump_to_location(app, view, note->file->buffer, note->range.min);
 		view_set_mark(app, view, seek_pos(note->range.min));
+
+		F4_Index_Unlock();
+	}
+}
+
+CUSTOM_UI_COMMAND_SIG(jump_to_definition_at_cursor_other_panel)
+CUSTOM_DOC("Jump to the first definition in the code index matching an identifier at the cursor")
+{
+	View_ID view = get_active_view(app, Access_ReadVisible);
+
+	if (view != 0) {
+		Scratch_Block scratch(app);
+		String_Const_u8 query = push_token_or_word_under_active_cursor(app, scratch);
+
+		F4_Index_Lock();
+
+		F4_Index_Note* note = F4_Index_LookupNote(query);
+		View_ID target_view = get_next_view_looped_primary_panels(app, view, Access_Always);
+		point_stack_push_view_cursor(app, target_view);
+		jump_to_location(app, target_view, note->file->buffer, note->range.min);
+		view_set_mark(app, target_view, seek_pos(note->range.min));
 
 		F4_Index_Unlock();
 	}

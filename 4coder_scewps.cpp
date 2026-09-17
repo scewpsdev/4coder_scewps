@@ -11,9 +11,17 @@
 	[X] go to definition
 	[X] select + search -> insert string
 	[X] token occurance underline
-	[ ] focus color theme
-	[ ] error annotations
-	[ ] stop seek next identifier at beginning or end of line
+	[X] focus color theme
+	[X] error annotations
+	[X] stop seek next identifier at beginning or end of line
+	[X] higher cursor
+	[X] fix cursor
+	[X] finish error annotations
+	[X] go to definition in other panel
+	[X] completion list
+	[ ] function signature help
+	[ ] error underline
+	[ ] simplify custom layer
 	[X] ui font
 	[ ] autocomplete
 	[ ] better bindings file syntax
@@ -82,6 +90,9 @@
 	- quarter_page_down
 	- quarter_page_up
 	- delete_rect: deletes text in block mode
+	- jump_to_definition_at_cursor_other_panel
+	- backspace_alpha_numeric_or_camel_boundary
+	- delete_alpha_numeric_or_camel_boundary
 
 	Colors
 	- defcolor_line_numbers_highlight
@@ -91,6 +102,9 @@
 
 	Config settings:
 	- b32 interpolate_cursor
+	- u64 lister_item_height
+	- u64 lister_width
+	- u64 lister_height
 	- u64 lister_panel_roundness
 	- u64 lister_item_roundness
 	- u64 buffer_margin
@@ -140,6 +154,8 @@ global i32 lister_open;
 global View_ID lister_view;
 global Custom_Command_Function* last_used_command;
 
+global Word_Complete_Menu complete_menu;
+
 global F4_Language_State f4_langs;
 
 #include "4coder_scewps_include.cpp"
@@ -149,6 +165,8 @@ CUSTOM_ID(colors, defcolor_line_numbers_highlight);
 CUSTOM_ID(colors, defcolor_brace_highlight);
 CUSTOM_ID(colors, defcolor_brace_line);
 CUSTOM_ID(colors, defcolor_symbol_highlight);
+CUSTOM_ID(colors, defcolor_error);
+CUSTOM_ID(colors, defcolor_warning);
 
 CUSTOM_ID(colors, fleury_color_syntax_crap);
 CUSTOM_ID(colors, fleury_color_operators);

@@ -78,6 +78,10 @@
 #define move_left_alpha_numeric_boundary default_move_left_alpha_numeric_boundary
 #define move_right_alpha_numeric_or_camel_boundary default_move_right_alpha_numeric_or_camel_boundary
 #define move_left_alpha_numeric_or_camel_boundary default_move_left_alpha_numeric_or_camel_boundary
+#define backspace_alpha_numeric_boundary default_backspace_alpha_numeric_boundary
+#define delete_alpha_numeric_boundary default_delete_alpha_numeric_boundary
+#define backspace_alpha_numeric_or_camel_boundary default_backspace_alpha_numeric_or_camel_boundary
+#define delete_alpha_numeric_or_camel_boundary default_delete_alpha_numeric_or_camel_boundary
 #define click_set_cursor_and_mark default_click_set_cursor_and_mark
 #define click_set_cursor default_click_set_cursor
 #define click_set_cursor_if_lbutton default_click_set_cursor_if_lbutton
@@ -87,12 +91,16 @@
 #define search default_search
 #define reverse_search default_reverse_search
 
-#include "4coder_base_commands.cpp"
+#include "4coder_scewps_base_commands.cpp"
 
 #undef move_right_alpha_numeric_boundary
 #undef move_left_alpha_numeric_boundary
 #undef move_right_alpha_numeric_or_camel_boundary
 #undef move_left_alpha_numeric_or_camel_boundary
+#undef backspace_alpha_numeric_boundary
+#undef delete_alpha_numeric_boundary
+#undef backspace_alpha_numeric_or_camel_boundary
+#undef delete_alpha_numeric_or_camel_boundary
 #undef click_set_cursor_and_mark
 #undef click_set_cursor
 #undef click_set_cursor_if_lbutton
@@ -107,12 +115,13 @@
 
 #define command_lister default_command_lister
 #define theme_lister default_theme_lister
-#include "4coder_lists.cpp"
+#include "4coder_scewps_lists.cpp"
 #undef command_lister
 #undef theme_lister
 
 #include "4coder_auto_indent.cpp"
-#include "4coder_search.cpp"
+#include "4coder_scewps_search.cpp"
+#include "4coder_scewps_completion.cpp"
 #include "4coder_jumping.cpp"
 #include "4coder_jump_sticky.cpp"
 #include "4coder_jump_lister.cpp"

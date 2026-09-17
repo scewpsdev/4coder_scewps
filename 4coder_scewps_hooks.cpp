@@ -69,15 +69,20 @@ CUSTOM_DOC("Input consumption loop for default view behavior")
 		Implicit_Map_Result map_result = implicit_map_function(app, 0, 0, &input.event);
 		if (map_result.command == 0) {
 			leave_current_input_unhandled(app);
-			continue;
+		} else {
+			// NOTE(allen): Run the command and pre/post command stuff
+			default_pre_command(app, scope);
+			ProfileCloseNow(view_input_profile);
+			map_result.command(app);
+			ProfileScope(app, "after view input");
+			default_post_command(app, scope);
 		}
 
-		// NOTE(allen): Run the command and pre/post command stuff
-		default_pre_command(app, scope);
-		ProfileCloseNow(view_input_profile);
-		map_result.command(app);
-		ProfileScope(app, "after view input");
-		default_post_command(app, scope);
+		Word_Complete_Menu** menu_ptr = scope_attachment(app, scope, view_word_complete_menu, Word_Complete_Menu*);
+		Word_Complete_Menu* menu = *menu_ptr;
+		if (menu) {
+			completion_list_on_event(app, view, menu, input);
+		}
 	}
 }
 

@@ -75,6 +75,18 @@
     <ClCompile Include="languages\4coder_lang_config_4coder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="4coder_scewps_completion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_base_commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_lists.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="4coder_fleury_colors.h">

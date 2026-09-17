@@ -7,5 +7,6 @@
     <LocalDebuggerCommand>E:\4cc\build\4ed.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArguments>-U E:\4cc\build\custom\4coder_scewps</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>D:/Dev/2026/Tetris</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>
