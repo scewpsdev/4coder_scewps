@@ -99,6 +99,8 @@
 	- defcolor_brace_highlight
 	- defcolor_brace_line
 	- defcolor_symbol_highlight
+	- defcolor_error
+	- defcolor_warning
 
 	Config settings:
 	- b32 interpolate_cursor
