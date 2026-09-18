@@ -420,6 +420,8 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 		draw_complete_menu(app, active_view, menu);
 	}
 
+	F4_PosContext_Render(app, view_id, buffer, text_layout_id, cursor_pos);
+
 	draw_set_clip(app, prev_clip);
 
 	/*

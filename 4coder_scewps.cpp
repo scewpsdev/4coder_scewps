@@ -160,8 +160,6 @@ global Word_Complete_Menu complete_menu;
 
 global F4_Language_State f4_langs;
 
-#include "4coder_scewps_include.cpp"
-
 // NOTE(allen): Users can declare their own managed IDs here.
 CUSTOM_ID(colors, defcolor_line_numbers_highlight);
 CUSTOM_ID(colors, defcolor_brace_highlight);
@@ -195,6 +193,8 @@ CUSTOM_ID(colors, fleury_color_comment_user_name);
 CUSTOM_ID(colors, fleury_color_lego_grab);
 CUSTOM_ID(colors, fleury_color_lego_splat);
 CUSTOM_ID(colors, fleury_color_error_annotation);
+
+#include "4coder_scewps_include.cpp"
 
 // custom files
 

@@ -61,4 +61,7 @@ struct F4_Language_State
     F4_Language *language_table[4096];
 };
 
+internal F4_Language*
+F4_LanguageFromBuffer(Application_Links* app, Buffer_ID buffer);
+
 #endif // FCODER_FLEURY_LANG_H
