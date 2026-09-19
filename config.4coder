@@ -63,11 +63,11 @@ default_tab_width = 4;
 indent_clear_blank_lines = false;
 
 // Theme
-default_theme_name = "theme-focus";
+default_theme_name = "theme-github";
 
 // Font
-//default_font_name = "comic shanns 2.ttf";
-default_font_name = "C:\Windows\Fonts\consola.ttf";
+default_font_name = "comic shanns 2.ttf";
+//default_font_name = "C:\Windows\Fonts\consola.ttf";
 default_font_size = 15;
 default_font_hinting = false;
 
@@ -92,25 +92,25 @@ default_flags_sh  = "-g";
 // Custom settings
 
 // focus style settings
-interpolate_cursor = false;
-//cursor_roundness = 0;
-file_margin = 1;
-lister_item_height = 120;
-lister_panel_roundness = 8;
-lister_item_roundness = 0;
-lister_margin = 0;
-lister_inner_margin = 0;
-lister_item_margin = 0;
-show_line_number_margins = true;
-highlight_line_at_cursor = true;
-
 //interpolate_cursor = true;
+//cursor_roundness = 0;
+//file_margin = 1;
+//lister_item_height = 120;
 //lister_panel_roundness = 8;
-//lister_item_roundness = 8;
-//buffer_margin = 3;
-//lister_margin = 3;
-//lister_inner_margin = 3;
-//lister_item_margin = 3;
+//lister_item_roundness = 0;
+//lister_margin = 0;
+//lister_inner_margin = 0;
+//lister_item_margin = 0;
+//show_line_number_margins = true;
+//highlight_line_at_cursor = true;
+
+interpolate_cursor = true;
+lister_panel_roundness = 8;
+lister_item_roundness = 8;
+buffer_margin = 3;
+lister_margin = 3;
+lister_inner_margin = 3;
+lister_item_margin = 3;
 
 //ui_font_name = "C:/Windows/Fonts/segoeui.ttf";
 //ui_font_size = 15;

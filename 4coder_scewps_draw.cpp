@@ -198,6 +198,8 @@ function void draw_error_annotations(Application_Links* app, View_ID view, Buffe
 
 	Managed_Scope comp_scope = get_managed_scope_with_multiple_dependencies(app, scopes, ArrayCount(scopes));
 	Managed_Object* markers_object = scope_attachment(app, comp_scope, sticky_jump_marker_handle, Managed_Object);
+	if (!markers_object)
+		return;
 
 	i32 marker_count = managed_object_get_item_count(app, *markers_object);
 	Marker* markers = push_array(scratch, Marker, marker_count);
@@ -206,9 +208,14 @@ function void draw_error_annotations(Application_Links* app, View_ID view, Buffe
 	Face_ID face = get_view_face_id(app, view);
 	Face_Metrics metrics = get_face_metrics(app, face);
 
+	i64 last_error_line = -1;
 	for (i32 i = 0; i < marker_count; i++) {
 		i64 error_line = get_line_from_list(app, jump_state.list, i);
 		i64 line_number = get_line_number_from_pos(app, buffer, markers[i].pos);
+
+		if (line_number == last_error_line)
+			continue;
+		last_error_line = line_number;
 
 		b32 is_warning = false;
 		String_Const_u8 line = push_buffer_line(app, scratch, comp_buffer, error_line);
@@ -420,7 +427,7 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 		draw_complete_menu(app, active_view, menu);
 	}
 
-	F4_PosContext_Render(app, view_id, buffer, text_layout_id, cursor_pos);
+	F4_PosContext_Render(app, view_id, buffer, text_layout_id, rect, cursor_pos);
 
 	draw_set_clip(app, prev_clip);
 

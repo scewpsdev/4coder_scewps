@@ -272,8 +272,10 @@ get_complete_list_raw(Application_Links *app, Arena *arena, Buffer_ID buffer,
         String_Match_List down = buffer_find_all_matches(app, arena, buffer, 0,
                                                          Ii64(needle_range.max, size),
                                                          needle, pred, Scan_Forward);
-        string_match_list_filter_flags(&up, complete_must, complete_must_not);
-        string_match_list_filter_flags(&down, complete_must, complete_must_not);
+        //string_match_list_filter_flags(&up, complete_must, complete_must_not);
+        //string_match_list_filter_flags(&down, complete_must, complete_must_not);
+        string_match_list_filter_flags(&up, 0, 0);
+        string_match_list_filter_flags(&down, 0, 0);
         result = string_match_list_merge_nearest(&up, &down, needle_range);
     }
     else{

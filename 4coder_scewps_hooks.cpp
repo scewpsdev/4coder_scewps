@@ -17,8 +17,26 @@ CUSTOM_DOC("Default command for responding to a startup event")
 	next_color_table = init_color_table(app);
 
 	Scratch_Block scratch(app);
-	String_Const_u8 ui_font_name = def_get_config_string(scratch, vars_save_string_lit("ui_font_name"));
 
+	String_Const_u8 small_code_font_name = def_get_config_string(scratch, vars_save_string_lit("default_font_name"));
+	if (small_code_font_name.size)
+	{
+		String_Const_u8 binary_path = system_get_path(scratch, SystemPath_Binary);
+		String_Const_u8 font_path = push_stringf(scratch, (char*)"%.*sfonts/%.*s", binary_path.size, binary_path.str, small_code_font_name.size, small_code_font_name.str);
+		
+		u64 small_code_font_size = def_get_config_u64(app, vars_save_string_lit("default_font_size"), 15) - 2;
+
+		Face_Description desc = { 0 };
+		desc.font.file_name = font_path;
+		desc.parameters.pt_size = (u32)small_code_font_size;
+		desc.parameters.bold = 0;
+		desc.parameters.italic = 0;
+		desc.parameters.hinting = 0;
+
+		small_code_font = try_create_new_face(app, &desc);
+	}
+
+	String_Const_u8 ui_font_name = def_get_config_string(scratch, vars_save_string_lit("ui_font_name"));
 	if (ui_font_name.size) {
 		u64 ui_font_size = def_get_config_u64(app, vars_save_string_lit("ui_font_size"), 15);
 

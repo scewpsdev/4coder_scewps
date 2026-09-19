@@ -298,8 +298,9 @@ _F4_PosContext_RenderDefinitionTokens(Application_Links* app, Face_ID face,
 {
     Scratch_Block scratch(app);
     Vec2_f32 starting_text_pos = text_position;
+
     Vec2_f32 arg_start = starting_text_pos;
-    Vec2_f32 arg_end = starting_text_pos;
+    Vec2_f32 arg_end = arg_start;
 
     Face_Metrics metrics = get_face_metrics(app, face);
 
@@ -310,13 +311,17 @@ _F4_PosContext_RenderDefinitionTokens(Application_Links* app, Face_ID face,
         Token* token = token_it_read(&it);
         if (token == 0) { break; }
 
+        String_Const_u8 token_string = string_substring(backing_string, Ii64(token));
+        f32 advance = get_string_advance(app, face, token_string);
+
         if (token->kind == TokenBaseKind_Whitespace)
         {
             b32 after_arg_start = false;
             if (arg_start == text_position)
                 after_arg_start = true;
-            text_position.x += get_string_advance(app, face, string_u8_litexpr(" "));
-            arg_start = text_position;
+            text_position.x += advance;
+            if (after_arg_start)
+                arg_start = text_position;
         }
         else
         {
@@ -324,25 +329,27 @@ _F4_PosContext_RenderDefinitionTokens(Application_Links* app, Face_ID face,
 
             ARGB_Color color = finalize_color(defcolor_text_default, 0);
             if (token->kind == TokenBaseKind_StatementClose) {
-                String_Const_u8 str = string_substring(backing_string, Ii64(token));
-                if (string_match(str, S8Lit(",")))
+                if (string_match(token_string, S8Lit(",")))
                 {
-                    arg_end = text_position;
-                    if (arg_idx == highlight_arg)
+                    if (arg_idx == highlight_arg) {
                         highlight = true;
-                    arg_idx += 1;
+                    }
+                    arg_end = text_position;
+                    arg_idx++;
+                }
+            } else if (token->kind == TokenBaseKind_ParentheticalOpen) {
+                if (!found_first_open_paren) {
+                    found_first_open_paren = true;
+                    arg_start = text_position + V2f32(advance, 0);
                 }
             } else if (token->kind == TokenBaseKind_ParentheticalClose) {
-                arg_end = text_position;
-                if (arg_idx == highlight_arg)
+                if (arg_idx == highlight_arg) {
                     highlight = true;
+                    arg_end = text_position;
+                }
             }
 
-            Vec2_f32 start_pos = text_position;
-            String_Const_u8 token_string = string_substring(backing_string,
-                Ii64(token->pos, token->pos + token->size));
-            f32 string_advance = get_string_advance(app, face, token_string);
-            if (text_position.x + string_advance >= max_x)
+            if (text_position.x + advance >= max_x)
             {
                 text_position.x = starting_text_pos.x;
                 text_position.y += metrics.line_height;
@@ -351,24 +358,18 @@ _F4_PosContext_RenderDefinitionTokens(Application_Links* app, Face_ID face,
             {
                 draw_string(app, face, token_string, text_position, color);
             }
-            text_position.x += string_advance;
-            if (highlight)
+
+            text_position.x += advance;
+
+            if (highlight && do_render)
             {
-                if (do_render)
-                {
-                    draw_rectangle(app, Rf32(arg_start.x, arg_start.y + metrics.line_height,
-                        arg_end.x, arg_end.y + metrics.line_height + 2.f),
-                        0, finalize_color(defcolor_symbol_highlight, 0));
-                }
+                draw_rectangle(app, Rf32(arg_start.x, arg_start.y + metrics.line_height,
+                    arg_end.x, arg_end.y + metrics.line_height + 2.f),
+                    0, finalize_color(defcolor_symbol_highlight, 0));
             }
 
-            if (token->kind == TokenBaseKind_ParentheticalOpen) {
-                if (!found_first_open_paren)
-                    arg_start = text_position;
-                found_first_open_paren = true;
-            } else if (token->kind == TokenBaseKind_StatementClose) {
-                String_Const_u8 str = string_substring(backing_string, Ii64(token));
-                if (string_match(str, S8Lit(",")))
+            if (token->kind == TokenBaseKind_StatementClose) {
+                if (string_match(token_string, S8Lit(",")))
                 {
                     arg_start = text_position;
                 }
@@ -384,8 +385,7 @@ _F4_PosContext_RenderDefinitionTokens(Application_Links* app, Face_ID face,
 }
 
 internal void
-F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer,
-    Text_Layout_ID text_layout_id, i64 pos)
+F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Text_Layout_ID text_layout_id, Rect_f32 view_rect, i64 pos)
 {
     if (def_get_config_b32(vars_save_string_lit("f4_disable_poscontext")))
     {
@@ -396,8 +396,7 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer,
     Scratch_Block scratch(app);
 
     Rect_f32 cursor_rect = text_layout_character_on_screen(app, text_layout_id, pos);
-    Rect_f32 view_rect = view_get_screen_rect(app, view);
-    Face_ID face = get_view_face_id(app, view); // global_small_code_face;
+    Face_ID face = small_code_font ? small_code_font : get_view_face_id(app, view);
     Face_Metrics metrics = get_face_metrics(app, face);
     F4_Language* language = F4_LanguageFromBuffer(app, buffer);
     f32 padding = 4.f;

@@ -19,7 +19,11 @@
 	[X] finish error annotations
 	[X] go to definition in other panel
 	[X] completion list
-	[ ] function signature help
+	[X] function signature help
+	[X] completion ignore case
+	[X] completion display perfect match at top
+	[X] fix argument underline
+	[ ] selection ctrl move end after identifier
 	[ ] error underline
 	[ ] simplify custom layer
 	[X] ui font
@@ -138,6 +142,7 @@
 #include "4coder_fleury_colors.h"
 
 // custom globals
+global Face_ID small_code_font = 0;
 global Face_ID ui_font = 0;
 
 global Rect_f32 current_cursor_rect;
