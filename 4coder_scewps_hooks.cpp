@@ -97,9 +97,11 @@ CUSTOM_DOC("Input consumption loop for default view behavior")
 		}
 
 		Word_Complete_Menu** menu_ptr = scope_attachment(app, scope, view_word_complete_menu, Word_Complete_Menu*);
-		Word_Complete_Menu* menu = *menu_ptr;
-		if (menu) {
-			completion_list_on_event(app, view, menu, input);
+		if (menu_ptr) {
+			Word_Complete_Menu* menu = *menu_ptr;
+			if (menu) {
+				completion_list_on_event(app, view, menu, input);
+			}
 		}
 	}
 }

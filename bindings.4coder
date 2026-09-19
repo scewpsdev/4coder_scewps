@@ -79,6 +79,7 @@ keys_file = {
 	
     { "set_mark",                    "Space", "Control" },
     //{ "replace_in_range",            "A", "Control" },
+	{ "select_all",            "A", "Control" },
     { "copy",                        "C", "Control" },
     //{ "delete_range",                "D", "Control" },
     { "delete_line",                 "D", "Control" },

@@ -118,6 +118,7 @@ skip_past(Application_Links* app, Buffer_ID buffer, Scan_Direction direction, i6
 
 function i64
 token_boundary(Application_Links* app, Buffer_ID buffer, Side side, Scan_Direction direction, i64 pos) {
+	
 	if (direction == Scan_Forward) {
 		u8 c = buffer_get_char(app, buffer, pos);
 		if (is_alpha_numeric_underscore_not_newline(c)) {
@@ -531,10 +532,11 @@ CUSTOM_DOC("Jump to the first definition in the code index matching an identifie
 
 		F4_Index_Lock();
 
-		F4_Index_Note* note = F4_Index_LookupNote(query);
-		point_stack_push_view_cursor(app, view);
-		jump_to_location(app, view, note->file->buffer, note->range.min);
-		view_set_mark(app, view, seek_pos(note->range.min));
+		if (F4_Index_Note* note = F4_Index_LookupNote(query)) {
+			point_stack_push_view_cursor(app, view);
+			jump_to_location(app, view, note->file->buffer, note->range.min);
+			view_set_mark(app, view, seek_pos(note->range.min));
+		}
 
 		F4_Index_Unlock();
 	}
@@ -551,11 +553,12 @@ CUSTOM_DOC("Jump to the first definition in the code index matching an identifie
 
 		F4_Index_Lock();
 
-		F4_Index_Note* note = F4_Index_LookupNote(query);
-		View_ID target_view = get_next_view_looped_primary_panels(app, view, Access_Always);
-		point_stack_push_view_cursor(app, target_view);
-		jump_to_location(app, target_view, note->file->buffer, note->range.min);
-		view_set_mark(app, target_view, seek_pos(note->range.min));
+		if (F4_Index_Note* note = F4_Index_LookupNote(query)) {
+			View_ID target_view = get_next_view_looped_primary_panels(app, view, Access_Always);
+			point_stack_push_view_cursor(app, target_view);
+			jump_to_location(app, target_view, note->file->buffer, note->range.min);
+			view_set_mark(app, target_view, seek_pos(note->range.min));
+		}
 
 		F4_Index_Unlock();
 	}

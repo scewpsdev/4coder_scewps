@@ -363,9 +363,24 @@ _F4_PosContext_RenderDefinitionTokens(Application_Links* app, Face_ID face,
 
             if (highlight && do_render)
             {
-                draw_rectangle(app, Rf32(arg_start.x, arg_start.y + metrics.line_height,
-                    arg_end.x, arg_end.y + metrics.line_height + 2.f),
-                    0, finalize_color(defcolor_symbol_highlight, 0));
+                if (arg_end.y > arg_start.y) {
+                    draw_rectangle(app, Rf32(arg_start.x, arg_start.y + metrics.line_height,
+                        max_x, arg_start.y + metrics.line_height + 2.f),
+                        0, finalize_color(defcolor_symbol_highlight, 0));
+                    i32 inbetween_lines = (i32)f32_round32((arg_end.y - arg_start.y) / metrics.line_height) - 1;
+                    for (i32 i = 0; i < inbetween_lines; i++) {
+                        draw_rectangle(app, Rf32(starting_text_pos.x, arg_start.y + (i + 2) * metrics.line_height,
+                            max_x, arg_start.y + (i + 2) * metrics.line_height + 2.f),
+                            0, finalize_color(defcolor_symbol_highlight, 0));
+                    }
+                    draw_rectangle(app, Rf32(starting_text_pos.x, arg_end.y + metrics.line_height,
+                        arg_end.x, arg_end.y + metrics.line_height + 2.f),
+                        0, finalize_color(defcolor_symbol_highlight, 0));
+                } else {
+                    draw_rectangle(app, Rf32(arg_start.x, arg_start.y + metrics.line_height,
+                        arg_end.x, arg_start.y + metrics.line_height + 2.f),
+                        0, finalize_color(defcolor_symbol_highlight, 0));
+                }
             }
 
             if (token->kind == TokenBaseKind_StatementClose) {
@@ -456,6 +471,8 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Tex
                                 if (token->kind == TokenBaseKind_ParentheticalClose)
                                 {
                                     paren_nest -= 1;
+                                }
+                                if (token->kind == TokenBaseKind_ScopeOpen || token->kind == TokenBaseKind_StatementClose) {
                                     if (paren_nest == 0)
                                     {
                                         definition_range.max = token->pos + token->size;
@@ -470,7 +487,7 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Tex
                     Token_Array definition_tokens = token_array_from_text(app, scratch, definition_string);
 
                     // NOTE(rjf): Calculate needed size for this tooltip.
-                    f32 max_x = view_rect.x1 - view_rect.x0;
+                    f32 max_x = view_rect.x1; // - view_rect.x0;
                     Vec2_f32 end_draw_position = _F4_PosContext_RenderDefinitionTokens(app, face, definition_string, definition_tokens,
                         false, 0, V2f32(0, 0), max_x);
                     Vec2_f32 needed_size =

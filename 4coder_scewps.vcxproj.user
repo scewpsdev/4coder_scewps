@@ -4,9 +4,9 @@
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommand>D:\Tools\4cc\build\4ed.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>E:\4cc\build\4ed.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-U D:\Tools\4cc\build\custom\4coder_scewps</LocalDebuggerCommandArguments>
-    <LocalDebuggerWorkingDirectory>D:/Dev/2026/Test</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommandArguments>-U E:\4cc\build\custom\4coder_scewps</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>D:/Dev/2026/SoftwareRenderer</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>

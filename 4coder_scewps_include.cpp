@@ -59,7 +59,7 @@
 #include "4coder_config.cpp"
 #include "4coder_scewps_config.cpp"
 #include "4coder_dynamic_bindings.cpp"
-#include "4coder_default_framework.cpp"
+#include "4coder_scewps_default_framework.cpp"
 #include "4coder_clipboard.cpp"
 
 #define run_lister default_run_lister

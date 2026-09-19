@@ -183,7 +183,7 @@ highlight_hovered_symbol(Application_Links* app, View_ID view, Buffer_ID buffer,
 	}
 }
 
-function void draw_error_annotations(Application_Links* app, View_ID view, Buffer_ID buffer, Text_Layout_ID layout, Buffer_ID comp_buffer) {
+function void draw_error_annotations(Application_Links* app, View_ID view, Buffer_ID buffer, Text_Layout_ID layout, Rect_f32 view_rect, Buffer_ID comp_buffer) {
 
 	Locked_Jump_State jump_state = get_locked_jump_state(app, &global_heap);
 	if (!jump_state.view)
@@ -236,6 +236,13 @@ function void draw_error_annotations(Application_Links* app, View_ID view, Buffe
 
 		Rect_f32 last_char = text_layout_character_on_screen(app, layout, get_line_end_pos(app, buffer, line_number) - 1);
 		Vec2_f32 position = V2f32(last_char.x1 + metrics.max_advance * 5, last_char.y0);
+
+		f32 max_x = view_rect.x1;
+		f32 line_advance = get_string_advance(app, face, line);
+		if (position.x + line_advance + metrics.max_advance * 2 >= max_x) {
+			position.x = max_x - metrics.max_advance * 3 - line_advance;
+			position.y += metrics.line_height;
+		}
 
 		ARGB_Color error_color = fcolor_resolve(fcolor_id(is_warning ? defcolor_warning : defcolor_error));
 		if (!error_color)
@@ -363,7 +370,7 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	b32 enable_error_annotations = def_get_config_b32(vars_save_string_lit("enable_error_annotations"), true);
 	if (enable_error_annotations) {
 		Buffer_ID compilation_buffer = get_buffer_by_name(app, string_u8_litexpr("*compilation*"), Access_Always);
-		draw_error_annotations(app, view_id, buffer, text_layout_id, compilation_buffer);
+		draw_error_annotations(app, view_id, buffer, text_layout_id, rect, compilation_buffer);
 	}
 
 	// brace lines
@@ -420,14 +427,14 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	// NOTE(allen): put the actual text on the actual screen
 	draw_text_layout_default(app, text_layout_id);
 
+	F4_PosContext_Render(app, view_id, buffer, text_layout_id, rect, cursor_pos);
+
 	Managed_Scope scope = view_get_managed_scope(app, active_view);
 	Word_Complete_Menu** menu_ptr = scope_attachment(app, scope, view_word_complete_menu, Word_Complete_Menu*);
 	Word_Complete_Menu* menu = *menu_ptr;
 	if (menu) {
 		draw_complete_menu(app, active_view, menu);
 	}
-
-	F4_PosContext_Render(app, view_id, buffer, text_layout_id, rect, cursor_pos);
 
 	draw_set_clip(app, prev_clip);
 

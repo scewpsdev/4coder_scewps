@@ -87,6 +87,9 @@
     <ClCompile Include="4coder_scewps_search.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="4coder_scewps_default_framework.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="4coder_fleury_colors.h">

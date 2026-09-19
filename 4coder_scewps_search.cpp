@@ -281,7 +281,8 @@ get_complete_list_raw(Application_Links *app, Arena *arena, Buffer_ID buffer,
     else{
         result = buffer_find_all_matches(app, arena, buffer, 0,
                                          Ii64(0, size), needle, pred, Scan_Forward);
-        string_match_list_filter_flags(&result, complete_must, complete_must_not);
+        //string_match_list_filter_flags(&result, complete_must, complete_must_not);
+        string_match_list_filter_flags(&result, 0, 0);
     }
     
     string_match_list_enclose_all(app, result,

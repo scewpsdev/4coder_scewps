@@ -63,7 +63,7 @@ default_tab_width = 4;
 indent_clear_blank_lines = false;
 
 // Theme
-default_theme_name = "theme-github";
+default_theme_name = "theme-focus";
 
 // Font
 default_font_name = "comic shanns 2.ttf";

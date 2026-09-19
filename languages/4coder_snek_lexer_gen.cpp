@@ -212,6 +212,7 @@ build_language_model(void)
     sm_key("Switch");
     sm_key("While");
     sm_key("As");
+    sm_key("Cast");
     
     sm_select_base_kind(TokenBaseKind_LiteralInteger);
     sm_key("LiteralTrue", "true");
