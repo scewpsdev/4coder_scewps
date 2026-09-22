@@ -132,7 +132,7 @@
 
 #include "4coder_log_parser.cpp"
 #include "4coder_keyboard_macro.cpp"
-#include "4coder_cli_command.cpp"
+#include "4coder_scewps_cli_command.cpp"
 #include "4coder_build_commands.cpp"
 #include "4coder_project_commands.cpp"
 #include "4coder_prj_v1.cpp"

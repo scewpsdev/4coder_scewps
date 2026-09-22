@@ -23,11 +23,16 @@
 	[X] completion ignore case
 	[X] completion display perfect match at top
 	[X] fix argument underline
-	[ ] selection ctrl move end after identifier
+	[X] broken lexer
+	[ ] sort error messages
+	[ ] horizontal scroll brace lines
+	[X] error messages hover at top of screen sometimes
+	[ ] query line at bottom
+	[X] selection ctrl move end after identifier
 	[ ] error underline
 	[ ] simplify custom layer
 	[X] ui font
-	[ ] autocomplete
+	[X] autocomplete
 	[ ] better bindings file syntax
 	[X] fix cursor disappearing bug
 	[X] fix alphanumeric boundary movement/deletion

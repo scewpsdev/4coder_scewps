@@ -543,8 +543,7 @@ BUFFER_EDIT_RANGE_SIG(sc_buffer_edit) {
 
 		if (token_index_resync_guess - token_index_first >= 4000) {
 			do_full_relex = true;
-		}
-		else {
+		} else {
 			Token* token_first = ptr->tokens + token_index_first;
 			Token* token_resync = ptr->tokens + token_index_resync_guess;
 
@@ -606,7 +605,7 @@ BUFFER_EDIT_RANGE_SIG(sc_buffer_edit) {
 	}
 
 	if (do_full_relex) {
-		*lex_task_ptr = async_task_no_dep(&global_async_system, do_full_lex_async,
+		*lex_task_ptr = async_task_no_dep(&global_async_system, sc_do_full_lex_async,
 			make_data_struct(&buffer_id));
 	}
 

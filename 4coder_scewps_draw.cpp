@@ -237,23 +237,25 @@ function void draw_error_annotations(Application_Links* app, View_ID view, Buffe
 		Rect_f32 last_char = text_layout_character_on_screen(app, layout, get_line_end_pos(app, buffer, line_number) - 1);
 		Vec2_f32 position = V2f32(last_char.x1 + metrics.max_advance * 5, last_char.y0);
 
-		f32 max_x = view_rect.x1;
-		f32 line_advance = get_string_advance(app, face, line);
-		if (position.x + line_advance + metrics.max_advance * 2 >= max_x) {
-			position.x = max_x - metrics.max_advance * 3 - line_advance;
-			position.y += metrics.line_height;
+		if (rect_width(last_char)) {
+			f32 max_x = view_rect.x1;
+			f32 line_advance = get_string_advance(app, face, line);
+			if (position.x + line_advance + metrics.max_advance * 2 >= max_x) {
+				position.x = max_x - metrics.max_advance * 3 - line_advance;
+				position.y += metrics.line_height;
+			}
+
+			ARGB_Color error_color = fcolor_resolve(fcolor_id(is_warning ? defcolor_warning : defcolor_error));
+			if (!error_color)
+				error_color = is_warning ? 0xFFFFCF4F : 0xFFFF7F7F;
+
+			Rect_f32 square = Rf32(position.x, position.y + 0.5f * (rect_height(last_char) - metrics.max_advance),
+				position.x + metrics.max_advance, position.y + 0.5f * (rect_height(last_char) + metrics.max_advance));
+			draw_rectangle(app, square, 0, error_color);
+			position.x += metrics.max_advance * 2;
+			
+			draw_string(app, face, line, position, error_color);
 		}
-
-		ARGB_Color error_color = fcolor_resolve(fcolor_id(is_warning ? defcolor_warning : defcolor_error));
-		if (!error_color)
-			error_color = is_warning ? 0xFFFFCF4F : 0xFFFF7F7F;
-
-		Rect_f32 square = Rf32(position.x, position.y + 0.5f * (rect_height(last_char) - metrics.max_advance),
-			position.x + metrics.max_advance, position.y + 0.5f * (rect_height(last_char) + metrics.max_advance));
-		draw_rectangle(app, square, 0, error_color);
-		position.x += metrics.max_advance * 2;
-		
-		draw_string(app, face, line, position, error_color);
 	}
 }
 
@@ -605,6 +607,24 @@ sc_draw_line_numbers(Application_Links* app, View_ID view_id, Buffer_ID buffer, 
 	draw_set_clip(app, prev_clip);
 }
 
+function Rect_f32
+draw_query_bar(Application_Links* app, Rect_f32 region, View_ID view_id, Face_ID face_id) {
+	Face_Metrics face_metrics = get_face_metrics(app, face_id);
+	f32 line_height = face_metrics.line_height;
+
+	Query_Bar* space[32];
+	Query_Bar_Ptr_Array query_bars = {};
+	query_bars.ptrs = space;
+	if (get_active_query_bars(app, view_id, ArrayCount(space), &query_bars)) {
+		for (i32 i = 0; i < query_bars.count; i += 1) {
+			Rect_f32_Pair pair = layout_query_bar_on_bot(region, line_height, 1);
+			draw_query_bar(app, query_bars.ptrs[i], face_id, pair.max);
+			region = pair.min;
+		}
+	}
+	return(region);
+}
+
 function void
 sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	ProfileScope(app, "default render caller");
@@ -646,7 +666,7 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	}
 
 	// NOTE(allen): query bars
-	region = default_draw_query_bars(app, region, view_id, face_id);
+	region = draw_query_bar(app, region, view_id, face_id);
 
 	// NOTE(allen): FPS hud
 	if (show_fps_hud) {
@@ -707,8 +727,8 @@ sc_buffer_region(Application_Links* app, View_ID view_id, Rect_f32 region) {
 		Query_Bar_Ptr_Array query_bars = {};
 		query_bars.ptrs = space;
 		if (get_active_query_bars(app, view_id, ArrayCount(space), &query_bars)) {
-			Rect_f32_Pair pair = layout_query_bar_on_top(region, line_height, query_bars.count);
-			region = pair.max;
+			Rect_f32_Pair pair = layout_query_bar_on_bot(region, line_height, query_bars.count);
+			region = pair.min;
 		}
 	}
 
