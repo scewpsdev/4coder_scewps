@@ -26,8 +26,9 @@
 	[X] broken lexer
 	[ ] sort error messages
 	[ ] horizontal scroll brace lines
+	[ ] horizontal scroll glitchiness
 	[X] error messages hover at top of screen sometimes
-	[ ] query line at bottom
+	[X] query line at bottom
 	[X] selection ctrl move end after identifier
 	[ ] error underline
 	[ ] simplify custom layer

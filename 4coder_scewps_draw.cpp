@@ -5,7 +5,47 @@
 // TOP
 
 function void
-sc_draw_cursor(Application_Links* app, View_ID view_id, b32 is_active_view,
+sc_draw_cursor_emacs(Application_Links* app, View_ID view_id, b32 is_active_view,
+	Buffer_ID buffer, Text_Layout_ID text_layout_id,
+	f32 roundness, f32 outline_thickness) {
+	b32 has_highlight_range = draw_highlight_range(app, view_id, buffer, text_layout_id, roundness);
+	if (!has_highlight_range) {
+		i32 cursor_sub_id = default_cursor_sub_id();
+
+		i64 cursor_pos = view_get_cursor_pos(app, view_id);
+		i64 mark_pos = view_get_mark_pos(app, view_id);
+
+		if (is_active_view) {
+			next_cursor_rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
+		}
+
+		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
+
+		if (cursor_blink_state) {
+			Rect_f32 rect = current_cursor_rect;
+			draw_rectangle(app, rect, roundness, color);
+		}
+
+		if (is_active_view) {
+			paint_text_color_pos(app, text_layout_id, cursor_pos,
+				fcolor_id(defcolor_at_cursor));
+			draw_character_wire_frame(app, text_layout_id, mark_pos,
+				roundness, outline_thickness,
+				fcolor_id(defcolor_mark));
+		}
+		else {
+			draw_character_wire_frame(app, text_layout_id, mark_pos,
+				roundness, outline_thickness,
+				fcolor_id(defcolor_mark));
+			draw_character_wire_frame(app, text_layout_id, cursor_pos,
+				roundness, outline_thickness,
+				color);
+		}
+	}
+}
+
+function void
+sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_view,
 	Buffer_ID buffer, Text_Layout_ID text_layout_id, Face_Metrics metrics,
 	f32 roundness, f32 outline_thickness) {
 	b32 has_highlight_range = draw_highlight_range(app, view_id, buffer, text_layout_id, roundness);
@@ -411,14 +451,16 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	switch (fcoder_mode) {
 	case FCoderMode_Original:
 	{
-		draw_original_4coder_style_cursor_mark_highlight(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness);
+		Rect_f32 clip = draw_set_clip(app, prev_clip);
+		sc_draw_cursor_emacs(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness);
+		draw_set_clip(app, clip);
 	}break;
 	case FCoderMode_NotepadLike:
 	{
 		// remove clipping rect so the cursor doesn't get clipped by the margin
 		// when crossing buffer boundaries
 		Rect_f32 clip = draw_set_clip(app, prev_clip);
-		sc_draw_cursor(app, view_id, is_active_view, buffer, text_layout_id, metrics, cursor_roundness, mark_thickness);
+		sc_draw_cursor_notepad(app, view_id, is_active_view, buffer, text_layout_id, metrics, cursor_roundness, mark_thickness);
 		draw_set_clip(app, clip);
 	}break;
 	}

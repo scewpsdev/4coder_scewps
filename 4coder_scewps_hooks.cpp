@@ -111,7 +111,7 @@ sc_tick(Application_Links* app, Frame_Info frame_info) {
 	b32 interpolate_cursor = def_get_config_b32(vars_save_string_lit("interpolate_cursor"));
 	if (interpolate_cursor) {
 		Vec2_f32 cursor_size = next_cursor_rect.p1 - next_cursor_rect.p0;
-		current_cursor_rect.p0 = interp(current_cursor_rect.p0, next_cursor_rect.p0, frame_info.animation_dt, 1e-14f);
+		current_cursor_rect.p0 = interp(current_cursor_rect.p0, next_cursor_rect.p0, frame_info.animation_dt, 1e-20f);
 		current_cursor_rect.p1 = current_cursor_rect.p0 + cursor_size;
 		if (near_zero(current_cursor_rect.p0 - next_cursor_rect.p0, 0.5f)) {
 			current_cursor_rect = next_cursor_rect;

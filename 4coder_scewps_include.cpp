@@ -123,7 +123,7 @@
 #include "4coder_scewps_search.cpp"
 #include "4coder_scewps_completion.cpp"
 #include "4coder_jumping.cpp"
-#include "4coder_jump_sticky.cpp"
+#include "4coder_scewps_jump_sticky.cpp"
 #include "4coder_jump_lister.cpp"
 
 #define jump_to_definition_at_cursor default_jump_to_definition_at_cursor
