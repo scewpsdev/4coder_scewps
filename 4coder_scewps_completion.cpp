@@ -206,6 +206,27 @@ completion_list_on_event(Application_Links* app, View_ID view, Word_Complete_Men
     }
 }
 
+function Rect_f32
+get_contained_box_near_point(Application_Links* app, Rect_f32 container, Vec2_f32 p, Vec2_f32 box_dims, Face_ID face) {
+    Vec2_f32 container_dims = rect_dim(container);
+    box_dims.x = clamp_top(box_dims.x, container_dims.x);
+    box_dims.y = clamp_top(box_dims.y, container_dims.y);
+
+    Face_Metrics metrics = get_face_metrics(app, face);
+
+    Vec2_f32 q = p + V2f32(metrics.max_advance * -0.5f, metrics.line_height);
+    if (q.x + box_dims.x > container.x1) {
+        q.x = container.x1 - box_dims.x;
+    }
+    if (q.y + box_dims.y > container.y1) {
+        q.y = p.y - box_dims.y - metrics.line_height;
+        if (q.y < container.y0) {
+            q.y = (container.y0 + container.y1 - box_dims.y) * 0.5f;
+        }
+    }
+    return(Rf32_xy_wh(q, box_dims));
+}
+
 function void
 draw_completion_dropdown(Application_Links* app, Face_ID face, Fancy_Block* block,
     Vec2_f32 p, Rect_f32 region, Vec2_f32 padding,
@@ -214,7 +235,7 @@ draw_completion_dropdown(Application_Links* app, Face_ID face, Fancy_Block* bloc
     if (block->line_count > 0) {
         Vec2_f32 dims = get_fancy_block_dim(app, face, block);
         dims += padding * 2;
-        box = get_contained_box_near_point(region, p, dims);
+        box = get_contained_box_near_point(app, region, p, dims, face);
         box.x0 = f32_round32(box.x0);
         box.y0 = f32_round32(box.y0);
         box.x1 = f32_round32(box.x1);
@@ -328,6 +349,17 @@ _F4_PosContext_RenderDefinitionTokens(Application_Links* app, Face_ID face,
             b32 highlight = 0;
 
             ARGB_Color color = finalize_color(defcolor_text_default, 0);
+            if (token->kind == TokenBaseKind_Identifier && token == it.tokens) {
+                color = finalize_color(fleury_color_index_function, 0);
+            } else if (token->kind == TokenBaseKind_Keyword) {
+                color = finalize_color(defcolor_keyword, 0);
+            }
+            else if (token->kind >= TokenBaseKind_ScopeOpen && token->kind <= TokenBaseKind_ParentheticalClose) {
+                color = finalize_color(fleury_color_syntax_crap, 0);
+            } else if (token->kind == TokenBaseKind_Operator) {
+                color = finalize_color(fleury_color_operators, 0);
+            }
+
             if (token->kind == TokenBaseKind_StatementClose) {
                 if (string_match(token_string, S8Lit(",")))
                 {
@@ -484,7 +516,7 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Tex
                     }
 
                     String_Const_u8 definition_string = push_buffer_range(app, scratch, note->file->buffer, definition_range);
-                    Token_Array definition_tokens = token_array_from_text(app, scratch, definition_string);
+                    Token_Array definition_tokens = sc_token_array_from_text(app, scratch, note->file->buffer, definition_string);
 
                     // NOTE(rjf): Calculate needed size for this tooltip.
                     f32 max_x = view_rect.x1; // - view_rect.x0;

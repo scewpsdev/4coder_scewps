@@ -52,5 +52,25 @@ def_get_config_u64(Application_Links *app, String_ID key, u64 default_value) {
     return(result);
 }
 
+function Token_Array
+sc_token_array_from_text(Application_Links* app, Arena* arena, Buffer_ID src_buffer, String_Const_u8 data) {
+    ProfileScope(app, "token array from text");
+
+    F4_Language* language = F4_LanguageFromBuffer(app, src_buffer);
+    if (!language) {
+        language = F4_LanguageFromString(S8Lit("cpp"));
+    }
+
+    Token_List list = {};
+    void* lexing_state = push_array_zero(arena, u8, language->lex_state_size);
+    language->LexInit(lexing_state, data);
+
+    i32 limit_factor = 10000;
+    language->LexFullInput(arena, &list, lexing_state, limit_factor);
+
+    //Token_List list = lex_full_input_cpp(arena, data);
+    return(token_array_from_list(arena, &list));
+}
+
 // BOTTOM
 

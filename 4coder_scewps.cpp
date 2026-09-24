@@ -119,10 +119,12 @@
 	- u64 lister_height
 	- u64 lister_panel_roundness
 	- u64 lister_item_roundness
-	- u64 buffer_margin
 	- u64 lister_margin
 	- u64 lister_inner_margin
 	- u64 lister_item_margin
+	- u64 panel_margin
+	- u64 file_margin
+	- u64 file_roundness
 	- string ui_font_name
 	- u64 ui_font_size
 

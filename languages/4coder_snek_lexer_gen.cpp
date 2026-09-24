@@ -160,7 +160,7 @@ build_language_model(void)
     sm_key("SizeOf");
     sm_key("AlignOf");
     sm_key("Null");
-    sm_key("Any", "Any");
+    sm_key("Any");
     sm_key("Void");
     sm_key("String");
     sm_key("Bool");

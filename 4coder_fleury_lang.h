@@ -62,6 +62,9 @@ struct F4_Language_State
 };
 
 internal F4_Language*
+F4_LanguageFromString(String_Const_u8 name);
+
+internal F4_Language*
 F4_LanguageFromBuffer(Application_Links* app, Buffer_ID buffer);
 
 #endif // FCODER_FLEURY_LANG_H

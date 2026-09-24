@@ -62,7 +62,7 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
 		if (cursor_pos != mark_pos) {
 			Range_i64 range = Ii64(cursor_pos, mark_pos);
 			draw_character_block(app, text_layout_id, range, roundness, fcolor_id(defcolor_highlight));
-			paint_text_color_fcolor(app, text_layout_id, range, fcolor_id(defcolor_at_highlight));
+			//paint_text_color_fcolor(app, text_layout_id, range, fcolor_id(defcolor_at_highlight));
 		}
 
 		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
@@ -278,12 +278,14 @@ function void draw_error_annotations(Application_Links* app, View_ID view, Buffe
 		Vec2_f32 position = V2f32(last_char.x1 + metrics.max_advance * 5, last_char.y0);
 
 		if (rect_width(last_char)) {
+			/*
 			f32 max_x = view_rect.x1;
 			f32 line_advance = get_string_advance(app, face, line);
 			if (position.x + line_advance + metrics.max_advance * 2 >= max_x) {
 				position.x = max_x - metrics.max_advance * 3 - line_advance;
 				position.y += metrics.line_height;
 			}
+			*/
 
 			ARGB_Color error_color = fcolor_resolve(fcolor_id(is_warning ? defcolor_warning : defcolor_error));
 			if (!error_color)
@@ -441,7 +443,7 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	// NOTE(allen): Color parens
 	b32 use_paren_helper = def_get_config_b32(vars_save_string_lit("use_paren_helper"));
 	if (use_paren_helper) {
-		Color_Array colors = finalize_color_array(defcolor_text_cycle);
+		Color_Array colors = finalize_color_array(defcolor_brace_highlight);
 		highlight_enclosure_characters(app, buffer, text_layout_id, cursor_pos, 
 			TokenBaseKind_ParentheticalOpen, TokenBaseKind_ParentheticalClose, FindNest_Paren,
 			colors.vals, colors.count);
@@ -568,7 +570,7 @@ function Rect_f32_Pair
 sc_layout_line_numbers(Application_Links* app, Buffer_ID buffer, Rect_f32 rect, f32 digit_advance) {
 	i64 line_count = buffer_get_line_count(app, buffer);
 	i64 line_count_digit_count = digit_count_from_integer(line_count, 10);
-	f32 margin_width = (f32)line_count_digit_count * digit_advance + 4 * digit_advance;
+	f32 margin_width = (f32)line_count_digit_count * digit_advance + 5 * digit_advance;
 	return(rect_split_left_right(rect, margin_width));
 }
 
@@ -660,6 +662,7 @@ draw_query_bar(Application_Links* app, Rect_f32 region, View_ID view_id, Face_ID
 	if (get_active_query_bars(app, view_id, ArrayCount(space), &query_bars)) {
 		for (i32 i = 0; i < query_bars.count; i += 1) {
 			Rect_f32_Pair pair = layout_query_bar_on_bot(region, line_height, 1);
+			draw_rectangle_and_margin(app, pair.max, 0, fcolor_resolve(fcolor_id(defcolor_back)), fcolor_resolve(fcolor_id(defcolor_margin)), 1);
 			draw_query_bar(app, query_bars.ptrs[i], face_id, pair.max);
 			region = pair.min;
 		}
@@ -673,10 +676,7 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	View_ID active_view = get_active_view(app, Access_Always);
 	b32 is_active_view = (active_view == view_id);
 
-	u64 margin_width = def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
-	FColor margin_color = get_panel_margin_color(is_active_view ? UIHighlight_Active : UIHighlight_None);
-	Rect_f32 region = draw_background_and_margin(app, view_id, margin_color, fcolor_id(defcolor_back), f32(margin_width));
-	Rect_f32 prev_clip = draw_set_clip(app, region);
+	Rect_f32 region = view_get_screen_rect(app, view_id);
 
 	Buffer_ID buffer = view_get_buffer(app, view_id, Access_Always);
 	Face_ID face_id = get_face_id(app, buffer);
@@ -687,11 +687,23 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	// NOTE(allen): file bar
 	b64 showing_file_bar = false;
 	if (view_get_setting(app, view_id, ViewSetting_ShowFileBar, &showing_file_bar) && showing_file_bar) {
-		Rect_f32_Pair pair = layout_file_bar_on_bot(region, line_height * 1.25f);
+		Rect_f32_Pair pair = layout_file_bar_on_bot(region, f32_round32(line_height * 1.25f));
 		Face_ID file_bar_font = ui_font ? ui_font : face_id;
 		sc_draw_file_bar(app, view_id, buffer, file_bar_font, pair.max);
 		region = pair.min;
 	}
+
+	u64 panel_margin = def_get_config_u64(app, vars_save_string_lit("panel_margin"), 0);
+	draw_rectangle(app, region, 0, fcolor_resolve(fcolor_id(defcolor_bar)));
+	region = rect_inner(region, f32(panel_margin));
+
+	u64 file_margin = def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
+	u64 file_roundness = def_get_config_u64(app, vars_save_string_lit("file_roundness"), 0);
+	FColor margin_color = get_panel_margin_color(is_active_view ? UIHighlight_Active : UIHighlight_None);
+	draw_rectangle_and_margin(app, region, f32(file_roundness), fcolor_resolve(fcolor_id(defcolor_back)), fcolor_resolve(margin_color), f32(file_margin));
+	region = rect_inner(region, f32(file_margin));
+
+	Rect_f32 prev_clip = draw_set_clip(app, region);
 
 	Buffer_Scroll scroll = view_get_buffer_scroll(app, view_id);
 
@@ -751,17 +763,20 @@ sc_buffer_region(Application_Links* app, View_ID view_id, Rect_f32 region) {
 	f32 line_height = metrics.line_height;
 	f32 digit_advance = metrics.decimal_digit_advance;
 
-	// NOTE(allen): margins
-	u64 margin_width = def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
-	region = rect_inner(region, f32(margin_width));
-
 	// NOTE(allen): file bar
 	b64 showing_file_bar = false;
 	if (view_get_setting(app, view_id, ViewSetting_ShowFileBar, &showing_file_bar) &&
 		showing_file_bar) {
-		Rect_f32_Pair pair = layout_file_bar_on_bot(region, line_height * 1.25f);
+		Rect_f32_Pair pair = layout_file_bar_on_bot(region, f32_round32(line_height * 1.25f));
 		region = pair.min;
 	}
+
+	// NOTE(allen): margins
+	u64 panel_margin = def_get_config_u64(app, vars_save_string_lit("panel_margin"), 0);
+	region = rect_inner(region, f32(panel_margin));
+
+	u64 file_margin = def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
+	region = rect_inner(region, f32(file_margin));
 
 	// NOTE(allen): query bars
 	{

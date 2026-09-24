@@ -6,8 +6,8 @@
 
 function void
 draw_rectangle_and_margin(Application_Links* app, Rect_f32 rect, f32 roundness, ARGB_Color color, ARGB_Color margin_color, f32 margin) {
-	draw_rectangle(app, rect, roundness + margin, margin_color);
-	draw_rectangle(app, rect_inner(rect, margin), roundness, color);
+	draw_rectangle(app, rect, roundness, margin_color);
+	draw_rectangle(app, rect_inner(rect, margin), Max(roundness - margin, 0), color);
 }
 
 function void
