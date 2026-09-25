@@ -115,9 +115,9 @@ lister_item_roundness = 8;
 lister_margin = 3;
 lister_inner_margin = 3;
 lister_item_margin = 3;
-panel_margin = 0;
+panel_margin = 4;
 file_margin = 1;
-file_roundness = 0;
+file_roundness = 10;
 show_line_number_margins = true;
 highlight_line_at_cursor = true;
 //*/

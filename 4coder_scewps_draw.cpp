@@ -85,7 +85,7 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
 }
 
 function void
-sc_draw_line_highlight(Application_Links* app, Text_Layout_ID layout, Face_Metrics metrics, i64 line, FColor color) {
+sc_draw_line_highlight(Application_Links* app, Text_Layout_ID layout, Face_Metrics metrics, i64 line, FColor color, f32 file_roundness, Rect_f32 file_rect) {
 	ARGB_Color argb = fcolor_resolve(color);
 	Range_f32 y = text_layout_line_on_screen(app, layout, line);
 	if (range_size(y) > 0.f) {
@@ -93,7 +93,107 @@ sc_draw_line_highlight(Application_Links* app, Text_Layout_ID layout, Face_Metri
 		y.max += metrics.line_skip / 2;
 
 		Rect_f32 region = text_layout_region(app, layout);
-		draw_rectangle(app, Rf32(rect_range_x(region), y), 0.f, argb);
+		Rect_f32 rect = Rf32(rect_range_x(region), y);
+
+		if (rect.y1 > file_rect.y1 - file_roundness) {
+			Rect_f32 prev_clip = draw_set_clip(app, rect);
+			draw_rectangle(app, Rf32(file_rect.x0, file_rect.y1 - 2 * file_roundness, file_rect.x1, file_rect.y1), file_roundness, argb);
+			draw_set_clip(app, prev_clip);
+		} else if (rect.y0 < file_rect.y0 + file_roundness) {
+			Rect_f32 prev_clip = draw_set_clip(app, rect);
+			draw_rectangle(app, Rf32(file_rect.x0, file_rect.y0, file_rect.x1, file_rect.y0 + 2 * file_roundness), file_roundness, argb);
+			draw_set_clip(app, prev_clip);
+		} else {
+			draw_rectangle(app, rect, 0.f, argb);
+		}
+	}
+}
+
+function void
+sc_draw_line_highlight(Application_Links* app, Text_Layout_ID layout, Range_i64 line_range, ARGB_Color color, f32 file_roundness, Rect_f32 file_rect) {
+	Range_f32 y1 = text_layout_line_on_screen(app, layout, line_range.min);
+	Range_f32 y2 = text_layout_line_on_screen(app, layout, line_range.max);
+	Range_f32 y = range_union(y1, y2);
+	if (range_size(y) > 0.f) {
+		Rect_f32 region = text_layout_region(app, layout);
+		Rect_f32 rect = Rf32(rect_range_x(region), y);
+
+		if (rect.y1 > file_rect.y1 - file_roundness) {
+			Rect_f32 prev_clip = draw_set_clip(app, rect);
+			draw_rectangle(app, Rf32(file_rect.x0, file_rect.y1 - 2 * file_roundness, file_rect.x1, file_rect.y1), file_roundness, color);
+			draw_set_clip(app, prev_clip);
+		}
+		else if (rect.y0 < file_rect.y0 + file_roundness) {
+			Rect_f32 prev_clip = draw_set_clip(app, rect);
+			draw_rectangle(app, Rf32(file_rect.x0, file_rect.y0, file_rect.x1, file_rect.y0 + 2 * file_roundness), file_roundness, color);
+			draw_set_clip(app, prev_clip);
+		}
+		else {
+			draw_rectangle(app, rect, 0.f, color);
+		}
+	}
+}
+
+function void
+sc_draw_enclosures(Application_Links* app, Text_Layout_ID text_layout_id, Buffer_ID buffer,
+	i64 pos, u32 flags, Range_Highlight_Kind kind,
+	ARGB_Color* back_colors, i32 back_count,
+	ARGB_Color* fore_colors, i32 fore_count, f32 file_roundness, Rect_f32 file_rect) {
+	Scratch_Block scratch(app);
+	Range_i64_Array ranges = get_enclosure_ranges(app, scratch, buffer, pos, flags);
+
+	i32 color_index = 0;
+	for (i32 i = ranges.count - 1; i >= 0; i -= 1) {
+		Range_i64 range = ranges.ranges[i];
+		if (kind == RangeHighlightKind_LineHighlight) {
+			Range_i64 r[2] = {};
+			if (i > 0) {
+				Range_i64 inner_range = ranges.ranges[i - 1];
+				Range_i64 lines = get_line_range_from_pos_range(app, buffer, range);
+				Range_i64 inner_lines = get_line_range_from_pos_range(app, buffer, inner_range);
+				inner_lines.min = clamp_bot(lines.min, inner_lines.min);
+				inner_lines.max = clamp_top(inner_lines.max, lines.max);
+				inner_lines.min -= 1;
+				inner_lines.max += 1;
+				if (lines.min <= inner_lines.min) {
+					r[0] = Ii64(lines.min, inner_lines.min);
+				}
+				if (inner_lines.max <= lines.max) {
+					r[1] = Ii64(inner_lines.max, lines.max);
+				}
+			}
+			else {
+				r[0] = get_line_range_from_pos_range(app, buffer, range);
+			}
+			for (i32 j = 0; j < 2; j += 1) {
+				if (r[j].min == 0) {
+					continue;
+				}
+				Range_i64 line_range = r[j];
+				if (back_colors != 0) {
+					i32 back_index = color_index % back_count;
+					sc_draw_line_highlight(app, text_layout_id, line_range, back_colors[back_index], file_roundness, file_rect);
+				}
+				if (fore_colors != 0) {
+					i32 fore_index = color_index % fore_count;
+					Range_i64 pos_range = get_pos_range_from_line_range(app, buffer, line_range);
+					paint_text_color(app, text_layout_id, pos_range, fore_colors[fore_index]);
+				}
+			}
+		}
+		else {
+			if (back_colors != 0) {
+				i32 back_index = color_index % back_count;
+				draw_character_block(app, text_layout_id, range.min, 0.f, back_colors[back_index]);
+				draw_character_block(app, text_layout_id, range.max - 1, 0.f, back_colors[back_index]);
+			}
+			if (fore_colors != 0) {
+				i32 fore_index = color_index % fore_count;
+				paint_text_color_pos(app, text_layout_id, range.min, fore_colors[fore_index]);
+				paint_text_color_pos(app, text_layout_id, range.max - 1, fore_colors[fore_index]);
+			}
+		}
+		color_index += 1;
 	}
 }
 
@@ -116,9 +216,17 @@ highlight_enclosure_characters(Application_Links* app, Buffer_ID buffer, Text_La
 			}
 		}
 	}
-	draw_enclosures(app, layout, buffer,
+	sc_draw_enclosures(app, layout, buffer,
 		pos, findNestFlag, RangeHighlightKind_CharacterHighlight,
-		colors, color_count, 0, 0);
+		colors, color_count, 0, 0, 0, {});
+}
+
+function void
+sc_draw_scope_highlight(Application_Links* app, Buffer_ID buffer, Text_Layout_ID text_layout_id,
+	i64 pos, ARGB_Color* colors, i32 color_count, f32 file_roundness, Rect_f32 file_rect) {
+	sc_draw_enclosures(app, text_layout_id, buffer,
+		pos, FindNest_Scope, RangeHighlightKind_LineHighlight,
+		colors, color_count, 0, 0, file_roundness, file_rect);
 }
 
 function void
@@ -304,7 +412,7 @@ function void draw_error_annotations(Application_Links* app, View_ID view, Buffe
 function void
 sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	Buffer_ID buffer, Text_Layout_ID text_layout_id,
-	Rect_f32 rect) {
+	Rect_f32 rect, f32 file_roundness, Rect_f32 file_rect) {
 	ProfileScope(app, "render buffer");
 
 	View_ID active_view = get_active_view(app, Access_Always);
@@ -367,7 +475,7 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	b32 use_scope_highlight = def_get_config_b32(vars_save_string_lit("use_scope_highlight"));
 	if (use_scope_highlight) {
 		Color_Array colors = finalize_color_array(defcolor_back_cycle);
-		draw_scope_highlight(app, buffer, text_layout_id, cursor_pos, colors.vals, colors.count);
+		sc_draw_scope_highlight(app, buffer, text_layout_id, cursor_pos, colors.vals, colors.count, file_roundness, file_rect);
 	}
 
 	b32 use_error_highlight = def_get_config_b32(vars_save_string_lit("use_error_highlight"));
@@ -395,7 +503,7 @@ sc_render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	b32 highlight_line_at_cursor = def_get_config_b32(vars_save_string_lit("highlight_line_at_cursor"));
 	if (highlight_line_at_cursor && is_active_view) {
 		i64 line_number = get_line_number_from_pos(app, buffer, cursor_pos);
-		sc_draw_line_highlight(app, text_layout_id, metrics, line_number, fcolor_id(defcolor_highlight_cursor_line));
+		sc_draw_line_highlight(app, text_layout_id, metrics, line_number, fcolor_id(defcolor_highlight_cursor_line), file_roundness, file_rect);
 	}
 
 	// NOTE(allen): Whitespace highlight
@@ -575,13 +683,13 @@ sc_layout_line_numbers(Application_Links* app, Buffer_ID buffer, Rect_f32 rect, 
 }
 
 function void
-sc_draw_line_numbers(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face_ID face_id, Text_Layout_ID text_layout_id, Rect_f32 margin, f32 digit_advance) {
+sc_draw_line_numbers(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face_ID face_id, Text_Layout_ID text_layout_id, Rect_f32 margin, f32 digit_advance, f32 file_roundness) {
 	ProfileScope(app, "draw line number margin");
 
 	Scratch_Block scratch(app);
 
 	Rect_f32 prev_clip = draw_set_clip(app, margin);
-	draw_rectangle_fcolor(app, margin, 0.f, fcolor_id(defcolor_line_numbers_back));
+	draw_rectangle_fcolor(app, Rf32(margin.p0, V2f32(margin.x1 + file_roundness, margin.y1)), file_roundness, fcolor_id(defcolor_line_numbers_back));
 
 	Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
 	i64 line_count = buffer_get_line_count(app, buffer);
@@ -702,6 +810,7 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	FColor margin_color = get_panel_margin_color(is_active_view ? UIHighlight_Active : UIHighlight_None);
 	draw_rectangle_and_margin(app, region, f32(file_roundness), fcolor_resolve(fcolor_id(defcolor_back)), fcolor_resolve(margin_color), f32(file_margin));
 	region = rect_inner(region, f32(file_margin));
+	Rect_f32 file_rect = region;
 
 	Rect_f32 prev_clip = draw_set_clip(app, region);
 
@@ -745,11 +854,11 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 
 	// NOTE(allen): draw line numbers
 	if (show_line_number_margins) {
-		sc_draw_line_numbers(app, view_id, buffer, face_id, text_layout_id, line_number_rect, digit_advance);
+		sc_draw_line_numbers(app, view_id, buffer, face_id, text_layout_id, line_number_rect, digit_advance, f32(file_roundness - file_margin));
 	}
 
 	// NOTE(allen): draw the buffer
-	sc_render_buffer(app, view_id, face_id, buffer, text_layout_id, region);
+	sc_render_buffer(app, view_id, face_id, buffer, text_layout_id, region, f32(file_roundness - file_margin), file_rect);
 
 	text_layout_free(app, text_layout_id);
 	draw_set_clip(app, prev_clip);

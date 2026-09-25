@@ -1,0 +1,67 @@
+// Created by: scoops
+
+defcolor_text_default = 0xFFbfc9db;
+defcolor_back = 0xFF15212a;
+defcolor_margin = 0xFF10191f;
+defcolor_margin_hover = 0xFF213F41;
+defcolor_margin_active = 0xFF26b2b2;
+defcolor_list_item = {0xFF1a2831, 0xFF1a2831};
+defcolor_list_item_hover = {0xFF1e464d, 0xFF1e464d};
+defcolor_list_item_active = {0xFF21595f, 0xFF21595f};
+defcolor_cursor = {0xFF26b2b2};
+defcolor_at_cursor = defcolor_back;
+defcolor_highlight_cursor_line = 0xFF21333f;
+defcolor_highlight = 0xFF1c4449;
+defcolor_mark = 0x70FFFFFF;
+defcolor_at_highlight = defcolor_text_default;
+defcolor_comment = 0xFF87919d;
+defcolor_comment_pop = {0xFF00A000, 0xFFA00000};
+defcolor_keyword = 0xFFe67d74;
+defcolor_str_constant = 0xFFd4bc7d;
+defcolor_char_constant = defcolor_str_constant;
+defcolor_int_constant = 0xFFd699b5;
+defcolor_float_constant = defcolor_int_constant;
+defcolor_bool_constant = defcolor_str_constant;
+defcolor_include = defcolor_str_constant;
+defcolor_preproc = 0xFFe67d74;
+defcolor_special_character = 0xFFFF0000;
+defcolor_ghost_character = 0xFF5B4D3C;
+
+defcolor_paste = 0xFFFFBB00;
+
+defcolor_undo = 0xFF80005D;
+
+defcolor_highlight_junk = 0x80500000;
+defcolor_highlight_white = 0xFF003A3A;
+
+defcolor_bar = 0xFF21333f;
+defcolor_bar_active = 0xFFA8A8A8;
+defcolor_base = defcolor_text_default;
+defcolor_pop1 = 0xFF03CF0C;
+defcolor_pop2 = 0xFFf8ad34;
+
+defcolor_back_cycle = {defcolor_back};
+defcolor_text_cycle = {0xFF3d4a52};
+
+defcolor_line_numbers_back = defcolor_back;
+defcolor_line_numbers_text = 0xFF87919d;
+
+defcolor_line_numbers_highlight = defcolor_text_default;
+defcolor_brace_highlight = 0xFF3d4a52;
+defcolor_brace_line = 0xFF3d4a52;
+defcolor_symbol_highlight = 0xFF3d4a52;
+defcolor_error = 0xFFff5766;
+
+fleury_color_syntax_crap           = defcolor_text_default;
+fleury_color_operators             = 0xFFe0ad82;
+fleury_color_brace_highlight       = { defcolor_text_default };
+fleury_color_index_product_type    = 0xff82aaa3;
+fleury_color_index_sum_type        = 0xff82aaa3;
+fleury_color_index_function        = 0xFFd0c5a9;
+fleury_color_index_macro           = 0xFFd0c5a9;
+fleury_color_index_constant        = 0xFF7aa2f7;
+fleury_color_index_comment_tag     = 0xffffae00;
+fleury_color_index_decl            = defcolor_text_default;
+fleury_color_cursor_macro          = 0xffde2368;
+fleury_color_cursor_inactive       = 0xFF880000;
+

@@ -1,5 +1,5 @@
 .vs/
-obj/
 4coder_scewps/
+x64/
 *.dll
 *.pdb
