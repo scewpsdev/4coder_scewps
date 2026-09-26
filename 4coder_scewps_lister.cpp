@@ -32,21 +32,25 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	f32 block_height = line_height * (item_height / 100.0f);
 	f32 text_field_height = lister_get_text_field_height(line_height);
 
+	f32 panel_margin = (f32)def_get_config_u64(app, vars_save_string_lit("panel_margin"), 0);
+	f32 file_margin = (f32)def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
 	f32 lister_margin = (f32)def_get_config_u64(app, vars_save_string_lit("lister_margin"), 3);
 	f32 lister_inner_margin = (f32)def_get_config_u64(app, vars_save_string_lit("lister_inner_margin"), 3);
 	f32 lister_item_margin = (f32)def_get_config_u64(app, vars_save_string_lit("lister_item_margin"), 3);
 
 	Rect_f32 region = view_get_screen_rect(app, view);
-	region = rect_inner(region, lister_margin);
 	region = layout_file_bar_on_bot(region, line_height).min;
+	region = rect_inner(region, panel_margin);
+	region = rect_inner(region, file_margin);
 
 	f32 lister_width = (f32)def_get_config_u64(app, vars_save_string_lit("lister_width"), 80);
+	const f32 min_lister_gap = 4;
 	lister_width = lister_width / 100.0f * rect_width(region);
-	lister_width = Min(Max(lister_width, line_height * 40), rect_width(region) - lister_margin * 2);
+	lister_width = Min(Max(lister_width, line_height * 40), rect_width(region) - min_lister_gap * 2);
 
 	f32 lister_height = (f32)def_get_config_u64(app, vars_save_string_lit("lister_height"), 90);
 	lister_height = lister_height / 100.0f * rect_height(region);
-	lister_height = Min(lister_height, rect_height(region) - lister_margin * 2);
+	lister_height = Min(lister_height, rect_height(region) - min_lister_gap * 2);
 
 	f32 margin_x = (region.x1 - region.x0 - lister_width) * 0.5f;
 	f32 margin_y = (region.y1 - region.y0 - lister_height) * 0.5f;
