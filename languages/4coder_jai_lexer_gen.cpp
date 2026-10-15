@@ -204,7 +204,7 @@ build_language_model(void)
     sm_key("While");
     sm_key("Cast");
     
-    sm_select_base_kind(TokenBaseKind_LiteralInteger);
+    sm_select_base_kind(TokenBaseKind_Keyword);
     sm_key("LiteralTrue", "true");
     sm_key("LiteralFalse", "false");
     

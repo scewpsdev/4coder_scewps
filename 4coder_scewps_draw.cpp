@@ -45,6 +45,48 @@ sc_draw_cursor_emacs(Application_Links* app, View_ID view_id, b32 is_active_view
 }
 
 function void
+sc_draw_selection(Application_Links* app, View_ID view, Text_Layout_ID layout, Range_i64 range, f32 roundness, FColor color) {
+	ARGB_Color argb = fcolor_resolve(color);
+	if (range.first < range.one_past_last) {
+		i64 i = range.first;
+		Rect_f32 first_rect = text_layout_character_on_screen(app, layout, i);
+		i += 1;
+
+		Face_Metrics metrics = get_view_face_metrics(app, view);
+		f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+
+		Range_f32 y = rect_range_y(first_rect);
+		y.min -= half_line_skip;
+		y.max += half_line_skip;
+
+		Range_f32 x = rect_range_x(first_rect);
+		for (; i < range.one_past_last; i += 1) {
+			Rect_f32 rect = text_layout_character_on_screen(app, layout, i);
+			if (rect.x0 < rect.x1 && rect.y0 < rect.y1) {
+				Range_f32 new_y = rect_range_y(rect);
+				new_y.min -= half_line_skip;
+				new_y.max += half_line_skip;
+
+				Range_f32 new_x = rect_range_x(rect);
+				b32 joinable = false;
+				if (new_y == y && (range_overlap(x, new_x) || x.max == new_x.min || new_x.max == x.min)) {
+					joinable = true;
+				}
+
+				if (!joinable) {
+					draw_rectangle(app, Rf32(x, y), roundness, argb);
+					y = new_y;
+					x = new_x;
+				} else {
+					x = range_union(x, new_x);
+				}
+			}
+		}
+		draw_rectangle(app, Rf32(x, y), roundness, argb);
+	}
+}
+
+function void
 sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_view,
 	Buffer_ID buffer, Text_Layout_ID text_layout_id, Face_Metrics metrics,
 	f32 roundness, f32 outline_thickness) {
@@ -61,8 +103,7 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
 
 		if (cursor_pos != mark_pos) {
 			Range_i64 range = Ii64(cursor_pos, mark_pos);
-			draw_character_block(app, text_layout_id, range, roundness, fcolor_id(defcolor_highlight));
-			//paint_text_color_fcolor(app, text_layout_id, range, fcolor_id(defcolor_at_highlight));
+			sc_draw_selection(app, view_id, text_layout_id, range, roundness, fcolor_id(defcolor_highlight));
 		}
 
 		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
@@ -89,8 +130,10 @@ sc_draw_line_highlight(Application_Links* app, Text_Layout_ID layout, Face_Metri
 	ARGB_Color argb = fcolor_resolve(color);
 	Range_f32 y = text_layout_line_on_screen(app, layout, line);
 	if (range_size(y) > 0.f) {
-		y.min -= f32_ceil32(metrics.line_skip / 2);
-		y.max += f32_ceil32(metrics.line_skip / 2);
+		f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+
+		y.min -= half_line_skip;
+		y.max += -metrics.line_skip + half_line_skip;
 
 		Rect_f32 region = text_layout_region(app, layout);
 		Rect_f32 rect = Rf32(rect_range_x(region), y);
@@ -116,9 +159,10 @@ sc_draw_line_highlight(Application_Links* app, View_ID view, Text_Layout_ID layo
 	Range_f32 y = range_union(y1, y2);
 	if (range_size(y) > 0.f) {
 		Face_Metrics metrics = get_view_face_metrics(app, view);
-		
-		y.min -= f32_ceil32(metrics.line_skip / 2);
-		y.max += f32_ceil32(metrics.line_skip / 2);
+		f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+
+		y.min -= half_line_skip;
+		y.max += -metrics.line_skip + half_line_skip;
 		
 		Rect_f32 region = text_layout_region(app, layout);
 		Rect_f32 rect = Rf32(rect_range_x(region), y);
@@ -127,13 +171,11 @@ sc_draw_line_highlight(Application_Links* app, View_ID view, Text_Layout_ID layo
 			Rect_f32 prev_clip = draw_set_clip(app, rect);
 			draw_rectangle(app, Rf32(file_rect.x0, rect.y0 - file_roundness, file_rect.x1, file_rect.y1), file_roundness, color);
 			draw_set_clip(app, prev_clip);
-		}
-		else if (rect.y0 < file_rect.y0 + file_roundness) {
+		} else if (rect.y0 < file_rect.y0 + file_roundness) {
 			Rect_f32 prev_clip = draw_set_clip(app, rect);
 			draw_rectangle(app, Rf32(file_rect.x0, file_rect.y0, file_rect.x1, rect.y1 + file_roundness), file_roundness, color);
 			draw_set_clip(app, prev_clip);
-		}
-		else {
+		} else {
 			draw_rectangle(app, rect, 0.f, color);
 		}
 	}
@@ -707,10 +749,11 @@ sc_draw_line_numbers(Application_Links* app, View_ID view_id, Buffer_ID buffer, 
 		digit_buffer[i] = ' ';
 	}
 
-	i64 cursor_position = view_get_cursor_pos(app, view_id);
-	Buffer_Cursor cursor = view_compute_cursor(app, view_id, seek_pos(cursor_position));
+	//i64 cursor_position = view_get_cursor_pos(app, view_id);
+	//Buffer_Cursor cursor = view_compute_cursor(app, view_id, seek_pos(cursor_position));
 
-	i64 line_number = view_compute_cursor(app, view_id, seek_pos(visible_range.first)).line;
+	Buffer_Cursor cursor = view_compute_cursor(app, view_id, seek_pos(visible_range.first));
+	i64 line_number = cursor.line;
 
 	Buffer_Cursor cursor_opl = view_compute_cursor(app, view_id, seek_pos(visible_range.one_past_last));
 	i64 one_past_last_line_number = cursor_opl.line + 1;
@@ -730,7 +773,7 @@ sc_draw_line_numbers(Application_Links* app, View_ID view_id, Buffer_ID buffer, 
 	}
 
 	for (; line_number < one_past_last_line_number &&
-		line_number < line_count;) {
+		line_number <= line_count;) {
 		Range_f32 line_y = text_layout_line_on_screen(app, text_layout_id, line_number);
 		Vec2_f32 p = V2f32(margin.x0 + 2 * digit_advance, line_y.min);
 
@@ -859,11 +902,11 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 
 	// NOTE(allen): draw line numbers
 	if (show_line_number_margins) {
-		sc_draw_line_numbers(app, view_id, buffer, face_id, text_layout_id, line_number_rect, digit_advance, f32(file_roundness - file_margin));
+		sc_draw_line_numbers(app, view_id, buffer, face_id, text_layout_id, line_number_rect, digit_advance, Max(f32(file_roundness) - f32(file_margin), 0));
 	}
 
 	// NOTE(allen): draw the buffer
-	sc_render_buffer(app, view_id, face_id, buffer, text_layout_id, region, f32(file_roundness - file_margin), file_rect);
+	sc_render_buffer(app, view_id, face_id, buffer, text_layout_id, region, Max(f32(file_roundness) - f32(file_margin), 0), file_rect);
 
 	text_layout_free(app, text_layout_id);
 	draw_set_clip(app, prev_clip);
