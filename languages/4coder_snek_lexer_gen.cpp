@@ -165,6 +165,7 @@ build_language_model(void)
     sm_key("String");
     sm_key("Bool");
     sm_key("Float");
+    sm_key("Double");
     sm_key("Float32");
     sm_key("Float64");
     sm_key("Int");
@@ -214,7 +215,7 @@ build_language_model(void)
     sm_key("As");
     sm_key("Cast");
     
-    sm_select_base_kind(TokenBaseKind_LiteralInteger);
+    sm_select_base_kind(TokenBaseKind_Keyword);
     sm_key("LiteralTrue", "true");
     sm_key("LiteralFalse", "false");
     

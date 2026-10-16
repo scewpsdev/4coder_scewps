@@ -56,6 +56,20 @@ Snek_SkipParseBody(F4_Index_ParseCtx *ctx)
 }
 
 function b32
+Snek_ParseConstant(F4_Index_ParseCtx* ctx, Token** name)
+{
+    Token* base_type = nullptr;
+    return F4_Index_ParsePattern(ctx, "%k%o%k%t",
+        TokenBaseKind_Identifier, &base_type,
+        TokenBaseKind_Identifier, name,
+        "=") ||
+        F4_Index_ParsePattern(ctx, "%k%o%k%t",
+            TokenBaseKind_Keyword, &base_type,
+            TokenBaseKind_Identifier, name,
+            "=");
+}
+
+function b32
 Snek_ParseDecl(F4_Index_ParseCtx *ctx, Token **name)
 {
     Token *base_type = 0;
@@ -326,6 +340,12 @@ internal F4_LANGUAGE_INDEXFILE(Snek_IndexFile)
             {
                 F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Function, prototype ? F4_Index_NoteFlag_Prototype : 0);
             }
+        }
+
+        else if (scope_nest == 0 && Snek_ParseConstant(ctx, &name))
+        {
+            handled = 1;
+            F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Macro, 0);
         }
         
         //~ NOTE(rjf): Declarations

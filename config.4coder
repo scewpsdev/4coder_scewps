@@ -63,17 +63,16 @@ default_tab_width = 4;
 indent_clear_blank_lines = false;
 
 // Theme
-default_theme_name = "theme-catppuccin-mocha";
+default_theme_name = "theme-vs";
 
 // Font
-default_font_name = "GoogleSansCode-Medium.ttf";
-//default_font_name = "C:\Windows\Fonts\consola.ttf";
-default_font_size = 15;
-default_font_hinting = false;
-
 // aa modes:
 //  8bit - mono-chrome 0-255 opacity channel per pixel
 //  1bit - mono-chrome 0/1 opacity channel per pixel
+//default_font_name = "GoogleSansCode-Medium.ttf";
+default_font_name = "C:\Windows\Fonts\consola.ttf";
+default_font_size = 11;
+default_font_hinting = false;
 default_font_aa_mode = "lcd";
 
 // User
@@ -92,21 +91,23 @@ default_flags_sh  = "-g";
 // Custom settings
 
 // focus style settings
-/*
+///*
 interpolate_cursor = true;
-cursor_roundness = 0;
-file_margin = 1;
+cursor_roundness = 35;
 lister_item_height = 120;
 lister_panel_roundness = 8;
 lister_item_roundness = 0;
 lister_margin = 1;
 lister_inner_margin = 0;
 lister_item_margin = 0;
+panel_margin = 3;
+file_margin = 1;
+file_roundness = 0;
 show_line_number_margins = true;
 highlight_line_at_cursor = true;
-*/
+//*/
 
-///*
+/*
 interpolate_cursor = true;
 cursor_roundness = 0;
 lister_item_height = 120;
@@ -120,7 +121,7 @@ file_margin = 1;
 file_roundness = 10;
 show_line_number_margins = true;
 highlight_line_at_cursor = true;
-//*/
+*/
 
 //ui_font_name = "C:/Windows/Fonts/segoeui.ttf";
 //ui_font_size = 15;
