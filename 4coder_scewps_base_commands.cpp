@@ -61,9 +61,51 @@ write_text(Application_Links *app, String_Const_u8 insert){
                 }
             }
         }
-        
+
         // NOTE(allen): perform the edit
-        b32 edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+        b32 edit_success = false;
+
+        if (insert.str[0] == '{') {
+            History_Group history = history_group_begin(app, buffer);
+            edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+            buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr("}"));
+            history_group_end(history);
+        } else if (insert.str[0] == '(') {
+            History_Group history = history_group_begin(app, buffer);
+            edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+            buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr(")"));
+            history_group_end(history);
+        } else if (insert.str[0] == '[') {
+            History_Group history = history_group_begin(app, buffer);
+            edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+            buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr("]"));
+            history_group_end(history);
+        } else {
+            i64 left_char_pos = view_get_character_legal_pos_from_pos(app, view, pos - 1);
+            i64 right_char_pos = view_get_character_legal_pos_from_pos(app, view, pos);
+            u8 left_char = buffer_get_char(app, buffer, left_char_pos);
+            u8 right_char = buffer_get_char(app, buffer, right_char_pos);
+
+            b32 matching_braces = false;
+            if (left_char_pos != right_char_pos) {
+                if (left_char == '{' && right_char == '}')
+                    matching_braces = true;
+                else if (left_char == '(' && right_char == ')')
+                    matching_braces = true;
+                else if (left_char == '[' && right_char == ']')
+                    matching_braces = true;
+            }
+
+            if (insert.str[0] == '\n' && matching_braces) {
+                buffer_replace_range(app, buffer, Ii64(pos), string_u8_litexpr("\n"));
+                pos = view_get_character_legal_pos_from_pos(app, view, pos);
+                edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+            } else if ((insert.str[0] == '}' || insert.str[0] == ')' || insert.str[0] == ']') && insert.str[0] == right_char) {
+                edit_success = true;
+            } else {
+                edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+            }
+        }
         
         // NOTE(allen): finish merging records if necessary
         if (do_merge){
@@ -75,6 +117,7 @@ write_text(Application_Links *app, String_Const_u8 insert){
         if (edit_success){
             view_set_cursor_and_preferred_x(app, view, seek_pos(pos + insert.size));
 
+            // open completion list
             Managed_Scope scope = view_get_managed_scope(app, view);
             Word_Complete_Menu** menu_ptr = scope_attachment(app, scope, view_word_complete_menu, Word_Complete_Menu*);
             if (insert.size == 1 && is_alpha_numeric_underscore_not_newline(insert.str[0])) {
@@ -1488,7 +1531,7 @@ CUSTOM_DOC("Deletes the file of the current buffer if 4coder has the appropriate
     }
 }
 
-CUSTOM_COMMAND_SIG(save_to_query)
+CUSTOM_COMMAND_SIG(save_as)
 CUSTOM_DOC("Queries the user for a file name and saves the contents of the current buffer, altering the buffer's name too.")
 {
     View_ID view = get_active_view(app, Access_Always);
