@@ -161,6 +161,12 @@ F4_GetColor(Application_Links *app, ColorCtx ctx)
                             FillFromFlag(F4_SyntaxFlag_Macros);
                             color = F4_ARGBFromID(table, fleury_color_index_macro);
                         }break;
+
+                        case F4_Index_NoteKind_EnumValue:
+                        {
+                            FillFromFlag(F4_SyntaxFlag_Constants);
+                            color = F4_ARGBFromID(table, defcolor_lang_enum_value);
+                        }break;
                         
                         case F4_Index_NoteKind_Function:
                         {
@@ -173,11 +179,17 @@ F4_GetColor(Application_Links *app, ColorCtx ctx)
                             FillFromFlag(F4_SyntaxFlag_Constants);
                             color = F4_ARGBFromID(table, fleury_color_index_constant);
                         }break;
-                        
+
                         case F4_Index_NoteKind_Decl:
                         {
                             FillFromFlag(F4_SyntaxFlag_Constants);
                             color = F4_ARGBFromID(table, fleury_color_index_decl);
+                        }break;
+
+                        case F4_Index_NoteKind_Variable:
+                        {
+                            FillFromFlag(F4_SyntaxFlag_Constants);
+                            color = F4_ARGBFromID(table, defcolor_lang_variable);
                         }break;
                         
                         default: color = 0xffff00ff; break;

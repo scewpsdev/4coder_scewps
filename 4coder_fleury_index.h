@@ -11,7 +11,9 @@ enum F4_Index_NoteKind
     F4_Index_NoteKind_Constant,
     F4_Index_NoteKind_Function,
     F4_Index_NoteKind_Decl,
+    F4_Index_NoteKind_Variable,
     F4_Index_NoteKind_Macro,
+    F4_Index_NoteKind_EnumValue,
     F4_Index_NoteKind_CommentTag,
     F4_Index_NoteKind_CommentToDo,
     F4_Index_NoteKind_COUNT

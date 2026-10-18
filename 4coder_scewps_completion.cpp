@@ -267,6 +267,14 @@ draw_complete_menu(Application_Links* app, View_ID view, Word_Complete_Menu* men
     for (i32 i = 0; i < menu->count; i += 1) {
         if (menu->options[i].size > 0) {
             Fancy_Line* line = push_fancy_line(scratch, &block, face);
+
+            F4_Index_NoteKind note_kind = get_note_kind_from_letter(menu->options[i].str[menu->options[i].size]);
+            String_Const_u8 note_kind_str = {menu->options[i].str + menu->options[i].size, 1};
+            FColor note_kind_color = get_note_kind_color(note_kind);
+
+            push_fancy_string(scratch, line, fcolor_id(defcolor_text_default), string_u8_litexpr("["));
+            push_fancy_string(scratch, line, note_kind_color, note_kind_str);
+            push_fancy_string(scratch, line, fcolor_id(defcolor_text_default), string_u8_litexpr("] "));
             push_fancy_string(scratch, line, fcolor_id(defcolor_text_default), menu->options[i]);
         }
     }

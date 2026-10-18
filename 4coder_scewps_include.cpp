@@ -119,7 +119,7 @@
 #undef command_lister
 #undef theme_lister
 
-#include "4coder_auto_indent.cpp"
+#include "4coder_scewps_auto_indent.cpp"
 #include "4coder_scewps_search.cpp"
 #include "4coder_scewps_completion.cpp"
 #include "4coder_jumping.cpp"

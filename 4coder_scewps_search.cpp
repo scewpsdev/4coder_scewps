@@ -258,14 +258,263 @@ global String_Match_Flag complete_must = (StringMatch_CaseSensitive|
 global String_Match_Flag complete_must_not = StringMatch_LeftSideSloppy;
 
 internal String_Match_List
+find_note_matches(Application_Links* app, Arena* arena, Buffer_ID buffer, Range_i64 needle_range, String_Const_u8 needle) {
+    String_Match_List list = {};
+
+    F4_Index_Note* first_note = 0;
+    for (u64 i = 0; i < ArrayCount(f4_index.note_table); i++) {
+        if (F4_Index_Note* note = f4_index.note_table[i]) {
+            first_note = note;
+            break;
+        }
+    }
+
+    if (first_note) {
+        F4_Index_Note* note = first_note;
+        while (F4_Index_Note* next = note->next_sibling) {
+            if (string_has_substr(note->string, needle, StringMatch_CaseInsensitive)) {
+                String_Match_Flag flags = string_has_substr(note->string, needle) ? StringMatch_CaseSensitive : 0;
+                string_match_list_push(arena, &list, note->file->buffer, (i32)note->kind, flags,
+                    note->range.start, note->range.end - note->range.start);
+            }
+            note = next;
+        }
+    }
+
+    #if 0
+    {
+        String_Match_Flag flags = 0;
+        if (!(last_insensitive < size &&
+            j >= last_insensitive &&
+            last_insensitive > j - (i64)needle.size)) {
+            AddFlag(flags, StringMatch_CaseSensitive);
+        }
+        if (!(last_boundary < size &&
+            j >= last_boundary &&
+            last_boundary > j - (i64)needle.size)) {
+            AddFlag(flags, StringMatch_Straddled);
+        }
+        if (node != 0) {
+            u8 next_c = node->string.str[chunk_pos];
+            if (character_predicate_check_character(*predicate, next_c)) {
+                AddFlag(flags, StringMatch_LeftSideSloppy);
+            }
+        }
+        if (current_r) {
+            AddFlag(flags, StringMatch_RightSideSloppy);
+        }
+        string_match_list_push(arena, &list, buffer, string_id, flags,
+            base_index + (j - (needle.size - 1)), needle.size);
+    }
+    #endif
+
+    return list;
+}
+
+struct CompareStringMatchesContext {
+    Application_Links* app;
+    Scratch_Block* scratch;
+    String_Const_u8 needle;
+};
+
+function i32
+compare_string_matches(void* userPtr, const void* a, const void* b) {
+    CompareStringMatchesContext* ctx = (CompareStringMatchesContext*)userPtr;
+
+    String_Match* m1 = *(String_Match**)a;
+    String_Match* m2 = *(String_Match**)b;
+
+    i64 len1 = m1->range.end - m1->range.start;
+    i64 len2 = m2->range.end - m2->range.start;
+    if (len1 != len2)
+        return (len1 > len2) - (len1 < len2);
+
+    String_Const_u8 str1 = push_buffer_range(ctx->app, *ctx->scratch, m1->buffer, m1->range);
+    String_Const_u8 str2 = push_buffer_range(ctx->app, *ctx->scratch, m2->buffer, m2->range);
+
+    int alpha_cmp = strncmp((const char*)str1.str, (const char*)str2.str, len1); // len1 == len2 here
+    if (alpha_cmp != 0)
+        return alpha_cmp;
+
+    i64 input_len = ctx->needle.size;
+    bool match1 = (len1 == input_len && strncmp((const char*)str1.str, (const char*)ctx->needle.str, len1) == 0);
+    bool match2 = (len2 == input_len && strncmp((const char*)str2.str, (const char*)ctx->needle.str, len2) == 0);
+
+    if (match1 != match2)
+        return match2 - match1;
+
+    return 0;
+}
+
+function void
+sort_string_match_list_(Application_Links* app, String_Match_List* list, String_Const_u8 needle) {
+    if (!list || list->count <= 1) return;
+
+    Scratch_Block scratch(app);
+
+    String_Match** array = push_array(scratch, String_Match*, list->count);
+
+    String_Match* curr = list->first;
+    for (i32 i = 0; i < list->count; i++) {
+        array[i] = curr;
+        curr = curr->next;
+    }
+
+    CompareStringMatchesContext ctx = {};
+    ctx.app = app;
+    ctx.scratch = &scratch;
+    ctx.needle = needle;
+
+    qsort_s(array, list->count, sizeof(String_Match*), compare_string_matches, &ctx);
+
+    list->first = array[0];
+    for (i32 i = 0; i < list->count - 1; i++) {
+        array[i]->next = array[i + 1];
+    }
+    array[list->count - 1]->next = nullptr;
+    list->last = array[list->count - 1];
+}
+
+function const char*
+get_string_ptr(Application_Links* app, Arena* arena, Buffer_ID buffer, Range_i64 range) {
+    String_Const_u8 str = push_buffer_range(app, arena, buffer, range);
+    return (const char*)str.str;
+}
+
+// Internal comparison function that evaluates your 3 rules directly
+function int
+fast_compare(Application_Links* app, Arena* arena, String_Match* a, String_Match* b, String_Const_u8 needle) {
+    u64 len_a = u64(a->range.end - a->range.start);
+    u64 len_b = u64(b->range.end - b->range.start);
+
+    // 1. Sort by Length (Ascending)
+    if (len_a != len_b) {
+        return (len_a > len_b) - (len_a < len_b);
+    }
+
+    return 0;
+
+    #if 0
+    // Resolve actual text pointers only if lengths match
+    const char* str_a = get_string_ptr(app, arena, a->buffer, a->range);
+    const char* str_b = get_string_ptr(app, arena, b->buffer, b->range);
+
+    // 2. Sort Alphabetically
+    int alpha = strncmp(str_a, str_b, len_a);
+    if (alpha != 0) {
+        return alpha;
+    }
+
+    // 3. Sort by Exact Match with Input String
+    bool match_a = (len_a == needle.size && strncmp(str_a, (const char*)needle.str, len_a) == 0);
+    bool match_b = (len_b == needle.size && strncmp(str_b, (const char*)needle.str, len_b) == 0);
+
+    if (match_a != match_b) {
+        return match_b - match_a; // True (1) comes before False (0)
+    }
+
+    return 0;
+    #endif
+}
+
+// In-place merge of two sorted sub-lists
+function String_Match*
+merge_lists(Application_Links* app, Arena* arena, String_Match* a, String_Match* b, String_Const_u8 needle, String_Match** out_last) {
+    String_Match dummy = { 0 };
+    String_Match* curr = &dummy;
+
+    while (a && b) {
+        if (fast_compare(app, arena, a, b, needle) <= 0) {
+            curr->next = a;
+            a = a->next;
+        }
+        else {
+            curr->next = b;
+            b = b->next;
+        }
+        curr = curr->next;
+    }
+
+    curr->next = a ? a : b;
+
+    // Track the last element so we can update list->last instantly
+    while (curr->next) {
+        curr = curr->next;
+    }
+    *out_last = curr;
+
+    return dummy.next;
+}
+
+// Bottom-up Iterative Merge Sort (No recursion, highly efficient)
+function void
+sort_string_match_list(Application_Links* app, String_Match_List* list, String_Const_u8 needle) {
+    if (!list || list->count <= 1) return;
+
+    Scratch_Block scratch(app);
+
+    String_Match* head = list->first;
+
+    // Bottom-up pass using a step size that doubles each iteration
+    for (i32 step = 1; step < list->count; step *= 2) {
+        String_Match* curr = head;
+        String_Match* tail = NULL;
+        head = NULL;
+
+        while (curr) {
+            String_Match* left = curr;
+
+            // Split off the left list
+            int i;
+            for (i = 1; i < step && curr->next; i++) curr = curr->next;
+            String_Match* right = curr->next;
+            curr->next = NULL;
+            curr = right;
+
+            // Split off the right list
+            for (i = 1; i < step && curr && curr->next; i++) curr = curr->next;
+            String_Match* next_sublist = NULL;
+            if (curr) {
+                next_sublist = curr->next;
+                curr->next = NULL;
+            }
+
+            // Merge the two blocks
+            String_Match* merged_last = NULL;
+            String_Match* merged = merge_lists(app, scratch, left, right, needle, &merged_last);
+
+            if (!head) {
+                head = merged;
+            }
+            else {
+                tail->next = merged;
+            }
+            tail = merged_last;
+            curr = next_sublist;
+        }
+    }
+
+    // Finalize the list structural anchors
+    list->first = head;
+    list->last = list->first;
+    if (list->last) {
+        while (list->last->next) {
+            list->last = list->last->next;
+        }
+    }
+}
+
+internal String_Match_List
 get_complete_list_raw(Application_Links *app, Arena *arena, Buffer_ID buffer,
                       Range_i64 needle_range, String_Const_u8 needle){
+    #if 0
     local_persist Character_Predicate *pred =
         &character_predicate_alpha_numeric_underscore_utf8;
     
     String_Match_List result = {};
-    i64 size = buffer_get_size(app, buffer);
+    //i64 size = buffer_get_size(app, buffer);
     if (range_size(needle_range) > 0){
+        /*
         String_Match_List up = buffer_find_all_matches(app, arena, buffer, 0,
                                                        Ii64(0, needle_range.min),
                                                        needle, pred, Scan_Backward);
@@ -277,17 +526,89 @@ get_complete_list_raw(Application_Links *app, Arena *arena, Buffer_ID buffer,
         string_match_list_filter_flags(&up, 0, 0);
         string_match_list_filter_flags(&down, 0, 0);
         result = string_match_list_merge_nearest(&up, &down, needle_range);
+        */
+
+        result = find_note_matches(app, arena, buffer, needle_range, needle);
+        
+        sort_string_match_list(app, &result, needle);
     }
     else{
+        /*
         result = buffer_find_all_matches(app, arena, buffer, 0,
                                          Ii64(0, size), needle, pred, Scan_Forward);
         //string_match_list_filter_flags(&result, complete_must, complete_must_not);
         string_match_list_filter_flags(&result, 0, 0);
+        */
+
+        result = find_note_matches(app, arena, buffer, needle_range, needle);
+
+        sort_string_match_list(app, &result, needle);
     }
-    
-    string_match_list_enclose_all(app, result,
-                                  right_enclose_alpha_numeric_underscore_utf8);
+    #endif
+
+    local_persist Character_Predicate* pred =
+        &character_predicate_alpha_numeric_underscore_utf8;
+
+    String_Match_List result = find_note_matches(app, arena, buffer, needle_range, needle);
+
+    sort_string_match_list(app, &result, needle);
+    //string_match_list_enclose_all(app, result, right_enclose_alpha_numeric_underscore_utf8);
+
     return(result);
+}
+
+function u8
+get_note_kind_letter(F4_Index_NoteKind note_kind) {
+    u8 letters[F4_Index_NoteKind_COUNT] = {
+        '0',
+        'S',
+        'T',
+        'c',
+        'f',
+        'd',
+        'v',
+        '#',
+        'E',
+        '@',
+        '$',
+    };
+    return letters[note_kind];
+}
+
+function FColor
+get_note_kind_color(F4_Index_NoteKind note_kind) {
+    FColor colors[F4_Index_NoteKind_COUNT] = {
+        fcolor_id(defcolor_text_default),
+        fcolor_id(defcolor_text_default),
+        fcolor_id(defcolor_icon_type),
+        fcolor_id(defcolor_icon_constant),
+        fcolor_id(defcolor_icon_function),
+        fcolor_id(defcolor_icon_global),
+        fcolor_id(defcolor_icon_variable),
+        fcolor_id(defcolor_icon_macro),
+        fcolor_id(defcolor_icon_enum_value),
+        fcolor_id(defcolor_text_default),
+        fcolor_id(defcolor_text_default),
+    };
+    return colors[note_kind];
+}
+
+function F4_Index_NoteKind
+get_note_kind_from_letter(u8 letter) {
+    switch (letter) {
+        case '0': return F4_Index_NoteKind_Null;
+        case 'S': return F4_Index_NoteKind_Scope;
+        case 'T': return F4_Index_NoteKind_Type;
+        case 'c': return F4_Index_NoteKind_Constant;
+        case 'f': return F4_Index_NoteKind_Function;
+        case 'd': return F4_Index_NoteKind_Decl;
+        case 'v': return F4_Index_NoteKind_Variable;
+        case '#': return F4_Index_NoteKind_Macro;
+        case 'E': return F4_Index_NoteKind_EnumValue;
+        case '@': return F4_Index_NoteKind_CommentTag;
+        case '$': return F4_Index_NoteKind_CommentToDo;
+        default: return F4_Index_NoteKind_COUNT;
+    }
 }
 
 function void
@@ -300,7 +621,10 @@ word_complete_list_extend_from_raw(Application_Links *app, Arena *arena, String_
         String_Const_u8 s = push_buffer_range(app, scratch, node->buffer, node->range);
         Table_Lookup lookup = table_lookup(used_table, s);
         if (!lookup.found_match){
-            String_Const_u8 data = push_data_copy(arena, s);
+            String_Const_u8 data = push_data(arena, s.size + 1);
+            memcpy(data.str, s.str, s.size);
+            data.size = s.size;
+            data.str[s.size] = get_note_kind_letter((F4_Index_NoteKind)node->string_id);
             table_insert(used_table, data, 1);
             string_list_push(arena, list, data);
         }
@@ -378,6 +702,8 @@ word_complete_iter_next(Word_Complete_Iterator *it){
             it->node = it->node->next;
         }
         
+        break;
+        #if 0
         if (it->node != 0){
             break;
         }
@@ -399,6 +725,7 @@ word_complete_iter_next(Word_Complete_Iterator *it){
                                                        next, Ii64(), it->needle);
         word_complete_list_extend_from_raw(app, it->arena, &list,
                                            &it->list, &it->already_used_table);
+        #endif
     }
 }
 

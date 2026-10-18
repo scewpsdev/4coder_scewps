@@ -1,5 +1,3 @@
-global F4_Index_State f4_index = {};
-
 function void
 F4_Index_Initialize(void)
 {

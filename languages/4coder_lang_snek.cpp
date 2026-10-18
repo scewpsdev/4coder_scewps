@@ -12,6 +12,20 @@ Snek_ParseMacroDefinition(F4_Index_ParseCtx *ctx)
     }
 }
 
+function b32
+Snek_ParseVariableDeclaration(F4_Index_ParseCtx* ctx, Token** name)
+{
+    Token* base_type = nullptr;
+    return F4_Index_ParsePattern(ctx, "%k%o%k%t",
+        TokenBaseKind_Identifier, &base_type,
+        TokenBaseKind_Identifier, name,
+        "=") ||
+        F4_Index_ParsePattern(ctx, "%k%o%k%t",
+            TokenBaseKind_Keyword, &base_type,
+            TokenBaseKind_Identifier, name,
+            "=");
+}
+
 internal b32
 Snek_SkipParseBody(F4_Index_ParseCtx *ctx)
 {
@@ -43,6 +57,10 @@ Snek_SkipParseBody(F4_Index_ParseCtx *ctx)
                 break;
             }
         }
+        else if (Snek_ParseVariableDeclaration(ctx, &name))
+        {
+            F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Variable, 0);
+        }
         else if(body_found == 0)
         {
             break;
@@ -52,6 +70,7 @@ Snek_SkipParseBody(F4_Index_ParseCtx *ctx)
             F4_Index_ParseCtx_Inc(ctx, F4_Index_TokenSkipFlag_SkipWhitespace);
         }
     }
+
     return body_found;
 }
 
@@ -96,15 +115,15 @@ Snek_ParseStructOrUnionBody(F4_Index_ParseCtx *ctx, F4_Index_NoteFlags note_flag
 {
     Token *name = 0;
     b32 valid = 0;
-    b32 need_end_name = 0;
     
     if(F4_Index_ParsePattern(ctx, "%k", TokenBaseKind_Identifier, &name))
     {
         valid = 1;
     }
-    else
+
+    if (valid)
     {
-        need_end_name = 1;
+        F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Type, note_flags);
     }
     
     if(Snek_SkipParseBody(ctx))
@@ -114,23 +133,10 @@ Snek_ParseStructOrUnionBody(F4_Index_ParseCtx *ctx, F4_Index_NoteFlags note_flag
     {
         note_flags |= F4_Index_NoteFlag_Prototype;
     }
-    
-    if(need_end_name)
-    {
-        if(F4_Index_ParsePattern(ctx, "%k", TokenBaseKind_Identifier, &name))
-        {
-            valid = 1;
-        }
-    }
-    
-    if(valid)
-    {
-        F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Type, note_flags);
-    }
 }
 
 function b32
-Snek_ParseFunctionBody(F4_Index_ParseCtx *ctx, b32 *prototype_ptr)
+Snek_ParseFunctionBody(F4_Index_ParseCtx *ctx, Token* name)
 {
     b32 valid = 0;
     b32 prototype = 0;
@@ -155,17 +161,17 @@ Snek_ParseFunctionBody(F4_Index_ParseCtx *ctx, b32 *prototype_ptr)
         }
         F4_Index_ParseCtx_Inc(ctx, 0);
     }
-    
+
     if(valid)
     {
+        F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Function, prototype ? F4_Index_NoteFlag_Prototype : 0);
+
         if(prototype == 0)
         {
             Snek_SkipParseBody(ctx);
         }
     }
-    
-    *prototype_ptr = prototype;
-    
+
     return valid;
 }
 
@@ -179,11 +185,11 @@ Snek_ParseEnumBody(F4_Index_ParseCtx *ctx)
             Token *constant = 0;
             if(F4_Index_ParsePattern(ctx, "%k%t", TokenBaseKind_Identifier, &constant, ","))
             {
-                F4_Index_MakeNote(ctx, Ii64(constant), F4_Index_NoteKind_Constant, 0);
+                F4_Index_MakeNote(ctx, Ii64(constant), F4_Index_NoteKind_EnumValue, 0);
             }
             else if(F4_Index_ParsePattern(ctx, "%k%t", TokenBaseKind_Identifier, &constant, "="))
             {
-                F4_Index_MakeNote(ctx, Ii64(constant), F4_Index_NoteKind_Constant, 0);
+                F4_Index_MakeNote(ctx, Ii64(constant), F4_Index_NoteKind_EnumValue, 0);
                 
                 for(;!ctx->done;)
                 {
@@ -203,7 +209,7 @@ Snek_ParseEnumBody(F4_Index_ParseCtx *ctx)
             }
             else if(F4_Index_ParsePattern(ctx, "%k", TokenBaseKind_Identifier, &constant))
             {
-                F4_Index_MakeNote(ctx, Ii64(constant), F4_Index_NoteKind_Constant, 0);
+                F4_Index_MakeNote(ctx, Ii64(constant), F4_Index_NoteKind_EnumValue, 0);
             }
             else if(F4_Index_ParsePattern(ctx, "%t", "}"))
             {
@@ -335,17 +341,13 @@ internal F4_LANGUAGE_INDEXFILE(Snek_IndexFile)
                                        "("))
         {
             handled = 1;
-            b32 prototype = 0;
-            if(Snek_ParseFunctionBody(ctx, &prototype))
-            {
-                F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Function, prototype ? F4_Index_NoteFlag_Prototype : 0);
-            }
+            Snek_ParseFunctionBody(ctx, name);
         }
 
         else if (scope_nest == 0 && Snek_ParseConstant(ctx, &name))
         {
             handled = 1;
-            F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Macro, 0);
+            F4_Index_MakeNote(ctx, Ii64(name), F4_Index_NoteKind_Constant, 0);
         }
         
         //~ NOTE(rjf): Declarations

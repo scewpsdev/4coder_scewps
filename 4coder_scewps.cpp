@@ -172,6 +172,7 @@ global Custom_Command_Function* last_used_command;
 global Word_Complete_Menu complete_menu;
 
 global F4_Language_State f4_langs;
+global F4_Index_State f4_index;
 
 // NOTE(allen): Users can declare their own managed IDs here.
 CUSTOM_ID(colors, defcolor_line_numbers_highlight);
@@ -180,6 +181,17 @@ CUSTOM_ID(colors, defcolor_brace_line);
 CUSTOM_ID(colors, defcolor_symbol_highlight);
 CUSTOM_ID(colors, defcolor_error);
 CUSTOM_ID(colors, defcolor_warning);
+
+CUSTOM_ID(colors, defcolor_lang_enum_value);
+CUSTOM_ID(colors, defcolor_lang_variable);
+
+CUSTOM_ID(colors, defcolor_icon_type);
+CUSTOM_ID(colors, defcolor_icon_constant);
+CUSTOM_ID(colors, defcolor_icon_function);
+CUSTOM_ID(colors, defcolor_icon_global);
+CUSTOM_ID(colors, defcolor_icon_variable);
+CUSTOM_ID(colors, defcolor_icon_macro);
+CUSTOM_ID(colors, defcolor_icon_enum_value);
 
 CUSTOM_ID(colors, fleury_color_syntax_crap);
 CUSTOM_ID(colors, fleury_color_operators);
