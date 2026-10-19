@@ -54,7 +54,7 @@
 #include "4coder_layout_rule.cpp"
 #include "4coder_code_index.cpp"
 #include "4coder_fancy.cpp"
-#include "4coder_draw.cpp"
+#include "4coder_scewps_draw.cpp"
 #include "4coder_font_helper.cpp"
 #include "4coder_config.cpp"
 #include "4coder_scewps_config.cpp"

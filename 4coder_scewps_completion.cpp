@@ -458,7 +458,6 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Tex
 
     if (language != 0)
     {
-
         b32 render_at_cursor = 1;
         if (def_get_config_b32(vars_save_string_lit("f4_poscontext_draw_at_bottom_of_buffer")))
         {
@@ -511,7 +510,13 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Tex
                                 if (token->kind == TokenBaseKind_ParentheticalClose)
                                 {
                                     paren_nest -= 1;
+                                    if (paren_nest == 0)
+                                    {
+                                        definition_range.max = token->pos + token->size;
+                                        break;
+                                    }
                                 }
+                                /*
                                 if (token->kind == TokenBaseKind_ScopeOpen || token->kind == TokenBaseKind_StatementClose) {
                                     if (paren_nest == 0)
                                     {
@@ -519,6 +524,7 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Tex
                                         break;
                                     }
                                 }
+                                */
                             }
                         }
                     }

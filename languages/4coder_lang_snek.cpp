@@ -231,6 +231,7 @@ internal F4_LANGUAGE_INDEXFILE(Snek_IndexFile)
         handled = 0;
         
         Token *name = 0;
+        Token* base_type = 0;
                 
         if (0) {}
 
@@ -335,10 +336,21 @@ internal F4_LANGUAGE_INDEXFILE(Snek_IndexFile)
         
         //~ NOTE(rjf): Functions
         else if(scope_nest == 0 &&
+                F4_Index_ParsePattern(ctx, "%k%o%k%t",
+                    TokenBaseKind_Identifier, &base_type,
+                    TokenBaseKind_Identifier, &name,
+                    "(") ||
+                F4_Index_ParsePattern(ctx, "%k%o%k%t",
+                    TokenBaseKind_Keyword, &base_type,
+                    TokenBaseKind_Identifier, &name,
+                    "(")
+                /*
                 F4_Index_ParsePattern(ctx, "%t%o%k%t",
                                        "func",
                                        TokenBaseKind_Identifier, &name,
-                                       "("))
+                                       "(")
+                */
+                )
         {
             handled = 1;
             Snek_ParseFunctionBody(ctx, name);

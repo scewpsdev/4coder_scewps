@@ -162,37 +162,6 @@ view_get_is_passive(Application_Links *app, View_ID view_id){
 }
 
 function View_ID
-open_footer_panel(Application_Links *app, View_ID view){
-    View_ID special_view = open_view(app, view, ViewSplit_Bottom);
-    new_view_settings(app, special_view);
-    Buffer_ID buffer = view_get_buffer(app, special_view, Access_Always);
-    Face_ID face_id = get_face_id(app, buffer);
-    Face_Metrics metrics = get_face_metrics(app, face_id);
-    //view_set_split_pixel_size(app, special_view, (i32)(metrics.line_height*14.f));
-    view_set_split_pixel_size(app, special_view, (i32)(metrics.line_height * 12));
-    view_set_passive(app, special_view, true);
-    return(special_view);
-}
-
-function void
-close_build_footer_panel(Application_Links *app){
-    if (view_exists(app, build_footer_panel_view_id)){
-        view_close(app, build_footer_panel_view_id);
-    }
-    build_footer_panel_view_id = 0;
-}
-
-function View_ID
-open_build_footer_panel(Application_Links *app){
-    if (!view_exists(app, build_footer_panel_view_id)){
-        View_ID view = get_active_view(app, Access_Always);
-        build_footer_panel_view_id = open_footer_panel(app, view);
-        view_set_active(app, view);
-    }
-    return(build_footer_panel_view_id);
-}
-
-function View_ID
 get_next_view_looped_primary_panels(Application_Links *app, View_ID start_view_id, Access_Flag access){
     View_ID view_id = start_view_id;
     do{
@@ -223,6 +192,38 @@ get_next_view_after_active(Application_Links *app, Access_Flag access){
         view = get_next_view_looped_primary_panels(app, view, access);
     }
     return(view);
+}
+
+function View_ID
+open_footer_panel(Application_Links* app, View_ID view) {
+    View_ID special_view = open_view(app, view, ViewSplit_Bottom);
+    new_view_settings(app, special_view);
+    Buffer_ID buffer = view_get_buffer(app, special_view, Access_Always);
+    Face_ID face_id = get_face_id(app, buffer);
+    Face_Metrics metrics = get_face_metrics(app, face_id);
+    view_set_split_pixel_size(app, special_view, (i32)(metrics.line_height*14.f));
+    //view_set_split_pixel_size(app, special_view, (i32)(metrics.line_height * 12));
+    view_set_passive(app, special_view, true);
+    return(special_view);
+}
+
+function void
+close_build_footer_panel(Application_Links* app) {
+    if (view_exists(app, build_footer_panel_view_id)) {
+        view_close(app, build_footer_panel_view_id);
+    }
+    build_footer_panel_view_id = 0;
+}
+
+function View_ID
+open_build_footer_panel(Application_Links* app) {
+    if (!view_exists(app, build_footer_panel_view_id)) {
+        View_ID active_view = get_active_view(app, Access_Always);
+        View_ID view = get_next_view_looped_primary_panels(app, active_view, Access_Always);
+        build_footer_panel_view_id = open_footer_panel(app, view);
+        view_set_active(app, view);
+    }
+    return(build_footer_panel_view_id);
 }
 
 ////////////////////////////////

@@ -92,7 +92,7 @@ default_flags_sh  = "-g";
 
 // focus style settings
 ///*
-interpolate_cursor = true;
+interpolate_cursor = false;
 cursor_roundness = 35;
 lister_item_height = 120;
 lister_panel_roundness = 8;

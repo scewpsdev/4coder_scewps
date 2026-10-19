@@ -231,7 +231,7 @@ CUSTOM_ID(colors, fleury_color_error_annotation);
 
 #include "4coder_scewps_theme.cpp"
 #include "4coder_scewps_commands.cpp"
-#include "4coder_scewps_draw.cpp"
+//#include "4coder_scewps_draw.cpp"
 #include "4coder_scewps_hooks.cpp"
 
 #if !defined(META_PASS)

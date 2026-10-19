@@ -54,9 +54,6 @@
     <ClCompile Include="4coder_scewps_config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="4coder_scewps_draw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="4coder_scewps_hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -106,6 +103,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="4coder_scewps_jump_sticky.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="4coder_scewps_draw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
