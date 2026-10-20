@@ -302,56 +302,6 @@ CUSTOM_DOC("Scrolls the view up a quarter view height and moves the cursor with 
 	move_vertical_pixels(app, -jump);
 }
 
-function void
-sc_move_lines(Application_Links* app, Buffer_ID buffer, i64 cursor_line, i64 mark_line, Scan_Direction direction) {
-	i64 upper = Min(cursor_line, mark_line);
-	i64 lower = Max(cursor_line, mark_line);
-
-	History_Group group = history_group_begin(app, buffer);
-	if (direction == Scan_Forward) {
-		for (i64 line_number = lower; line_number >= upper; line_number--) {
-			swap_lines(app, buffer, line_number, line_number + 1);
-		}
-	}
-	else {
-		for (i64 line_number = upper; line_number <= lower; line_number++) {
-			swap_lines(app, buffer, line_number - 1, line_number);
-		}
-	}
-	history_group_end(group);
-}
-
-internal void
-sc_current_view_move_line(Application_Links* app, Scan_Direction direction) {
-	View_ID view = get_active_view(app, Access_ReadWriteVisible);
-	Buffer_ID buffer = view_get_buffer(app, view, Access_ReadWriteVisible);
-
-	i64 cursor_pos = view_get_cursor_pos(app, view);
-	i64 mark_pos = view_get_mark_pos(app, view);
-	Buffer_Cursor cursor = buffer_compute_cursor(app, buffer, seek_pos(cursor_pos));
-	Buffer_Cursor mark = buffer_compute_cursor(app, buffer, seek_pos(mark_pos));
-
-	sc_move_lines(app, buffer, cursor.line, mark.line, direction);
-
-	i64 delta = direction == Scan_Forward ? 1 : -1;
-
-	view_set_cursor_and_preferred_x(app, view, seek_line_col(cursor.line + delta, cursor.col));
-	view_set_mark(app, view, seek_line_col(mark.line + delta, mark.col));
-	no_mark_snap_to_cursor(app, view);
-}
-
-CUSTOM_COMMAND_SIG(move_line_up)
-CUSTOM_DOC("Swaps the line under the cursor with the line above it, and moves the cursor up with it.")
-{
-	sc_current_view_move_line(app, Scan_Backward);
-}
-
-CUSTOM_COMMAND_SIG(move_line_down)
-CUSTOM_DOC("Swaps the line under the cursor with the line below it, and moves the cursor down with it.")
-{
-	sc_current_view_move_line(app, Scan_Forward);
-}
-
 // Misc
 
 function void

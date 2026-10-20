@@ -30,7 +30,9 @@ enable_undo_fade_out = true;
 // the cursor and mark's roundness as a percentage of their width
 // (At 50 the left and right corners will be so round they form a semi-circle,
 //  hence 50 is the max)
-cursor_roundness = 35;
+interpolate_cursor = true;
+cursor_roundness = 0;
+cursor_notepad_block = false;
 
 // mark_thickness is a pixel count value setting the
 // thickness of the mark wire box in original mode
@@ -38,7 +40,17 @@ mark_thickness = 2;
 
 // lister_roundess is a value [0,50] setting the radius of
 // the lister items' roundness as a percentage of their height
-lister_roundness = 20;
+
+//lister_roundness = 20;
+lister_item_height = 120;
+lister_item_margin = 1;
+lister_item_roundness = 0;
+lister_panel_roundness = 8;
+lister_margin = 1;
+lister_inner_margin = 3;
+panel_margin = 3;
+file_margin = 1;
+file_roundness = 8;
 
 // Code Wrapping
 treat_as_code = ".cpp.c.hpp.h.cc.cs.java.rs.glsl.m.mm.src";
@@ -91,9 +103,9 @@ default_flags_sh  = "-g";
 // Custom settings
 
 // focus style settings
-///*
+/*
 interpolate_cursor = false;
-cursor_roundness = 35;
+cursor_roundness = 0;
 lister_item_height = 120;
 lister_panel_roundness = 8;
 lister_item_roundness = 0;
@@ -105,7 +117,7 @@ file_margin = 1;
 file_roundness = 0;
 show_line_number_margins = true;
 highlight_line_at_cursor = true;
-//*/
+*/
 
 /*
 interpolate_cursor = true;

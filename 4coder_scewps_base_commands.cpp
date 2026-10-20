@@ -36,6 +36,8 @@ write_text(Application_Links *app, String_Const_u8 insert){
         
         i64 pos = view_get_cursor_pos(app, view);
         pos = view_get_character_legal_pos_from_pos(app, view, pos);
+
+        i64 mark_pos = view_get_mark_pos(app, view);
         
         Buffer_ID buffer = view_get_buffer(app, view, Access_ReadWriteVisible);
         
@@ -66,20 +68,26 @@ write_text(Application_Links *app, String_Const_u8 insert){
         b32 edit_success = false;
 
         if (insert.str[0] == '{') {
-            History_Group history = history_group_begin(app, buffer);
-            edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
-            buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr("}"));
-            history_group_end(history);
+            if (pos == mark_pos) {
+                History_Group history = history_group_begin(app, buffer);
+                edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+                buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr("}"));
+                history_group_end(history);
+            }
         } else if (insert.str[0] == '(') {
-            History_Group history = history_group_begin(app, buffer);
-            edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
-            buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr(")"));
-            history_group_end(history);
+            if (pos == mark_pos) {
+                History_Group history = history_group_begin(app, buffer);
+                edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+                buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr(")"));
+                history_group_end(history);
+            }
         } else if (insert.str[0] == '[') {
-            History_Group history = history_group_begin(app, buffer);
-            edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
-            buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr("]"));
-            history_group_end(history);
+            if (pos == mark_pos) {
+                History_Group history = history_group_begin(app, buffer);
+                edit_success = buffer_replace_range(app, buffer, Ii64(pos), insert);
+                buffer_replace_range(app, buffer, Ii64(pos + insert.size), string_u8_litexpr("]"));
+                history_group_end(history);
+            }
         } else {
             i64 left_char_pos = view_get_character_legal_pos_from_pos(app, view, pos - 1);
             i64 right_char_pos = view_get_character_legal_pos_from_pos(app, view, pos);
@@ -1623,14 +1631,42 @@ CUSTOM_DOC("Queries the user for a name and creates a new directory with the giv
 
 ////////////////////////////////
 
+function void
+move_lines(Application_Links* app, Buffer_ID buffer, i64 cursor_line, i64 mark_line, Scan_Direction direction) {
+    i64 upper = Min(cursor_line, mark_line);
+    i64 lower = Max(cursor_line, mark_line);
+
+    History_Group group = history_group_begin(app, buffer);
+    if (direction == Scan_Forward) {
+        for (i64 line_number = lower; line_number >= upper; line_number--) {
+            swap_lines(app, buffer, line_number, line_number + 1);
+        }
+    }
+    else {
+        for (i64 line_number = upper; line_number <= lower; line_number++) {
+            swap_lines(app, buffer, line_number - 1, line_number);
+        }
+    }
+    history_group_end(group);
+}
+
 internal void
-current_view_move_line(Application_Links *app, Scan_Direction direction){
+current_view_move_line(Application_Links* app, Scan_Direction direction) {
     View_ID view = get_active_view(app, Access_ReadWriteVisible);
     Buffer_ID buffer = view_get_buffer(app, view, Access_ReadWriteVisible);
-    i64 pos = view_get_cursor_pos(app, view);
-    i64 line_number = get_line_number_from_pos(app, buffer, pos);
-    pos = move_line(app, buffer, line_number, direction);
-    view_set_cursor_and_preferred_x(app, view, seek_pos(pos));
+
+    i64 cursor_pos = view_get_cursor_pos(app, view);
+    i64 mark_pos = view_get_mark_pos(app, view);
+    Buffer_Cursor cursor = buffer_compute_cursor(app, buffer, seek_pos(cursor_pos));
+    Buffer_Cursor mark = buffer_compute_cursor(app, buffer, seek_pos(mark_pos));
+
+    move_lines(app, buffer, cursor.line, mark.line, direction);
+
+    i64 delta = direction == Scan_Forward ? 1 : -1;
+
+    view_set_cursor_and_preferred_x(app, view, seek_line_col(cursor.line + delta, cursor.col));
+    view_set_mark(app, view, seek_line_col(mark.line + delta, mark.col));
+    no_mark_snap_to_cursor(app, view);
 }
 
 CUSTOM_COMMAND_SIG(move_line_up)
@@ -1664,18 +1700,29 @@ CUSTOM_DOC("Delete the line the on which the cursor sits.")
 {
     View_ID view = get_active_view(app, Access_ReadWriteVisible);
     Buffer_ID buffer = view_get_buffer(app, view, Access_ReadWriteVisible);
-    i64 pos = view_get_cursor_pos(app, view);
-    i64 line = get_line_number_from_pos(app, buffer, pos);
-    Range_i64 range = get_line_pos_range(app, buffer, line);
-    range.end += 1;
-    i32 size = (i32)buffer_get_size(app, buffer);
-    range.end = clamp_top(range.end, size);
-    if (range_size(range) == 0 ||
-        buffer_get_char(app, buffer, range.end - 1) != '\n'){
-        range.start -= 1;
-        range.first = clamp_bot(0, range.first);
+
+    i64 cursor_pos = view_get_cursor_pos(app, view);
+    i64 mark_pos = view_get_mark_pos(app, view);
+    Buffer_Cursor cursor = buffer_compute_cursor(app, buffer, seek_pos(cursor_pos));
+    Buffer_Cursor mark = buffer_compute_cursor(app, buffer, seek_pos(mark_pos));
+
+    i64 upper = Min(cursor.line, mark.line);
+    i64 lower = Max(cursor.line, mark.line);
+
+    History_Group group = history_group_begin(app, buffer);
+    for (i64 i = 0; i < lower - upper + 1; i++) {
+        Range_i64 range = get_line_pos_range(app, buffer, upper);
+        range.end += 1;
+        i32 size = (i32)buffer_get_size(app, buffer);
+        range.end = clamp_top(range.end, size);
+        if (range_size(range) == 0 ||
+            buffer_get_char(app, buffer, range.end - 1) != '\n') {
+            range.start -= 1;
+            range.first = clamp_bot(0, range.first);
+        }
+        buffer_replace_range(app, buffer, range, string_u8_litexpr(""));
     }
-    buffer_replace_range(app, buffer, range, string_u8_litexpr(""));
+    history_group_end(group);
 }
 
 ////////////////////////////////
@@ -1854,6 +1901,7 @@ CUSTOM_DOC("Reopen the current buffer from the hard drive.")
     View_ID view = get_active_view(app, Access_ReadVisible);
     Buffer_ID buffer = view_get_buffer(app, view, Access_ReadVisible);
     buffer_reopen(app, buffer, 0);
+    center_view(app);
 }
 
 ////////////////////////////////

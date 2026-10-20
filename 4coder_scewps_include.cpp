@@ -60,7 +60,7 @@
 #include "4coder_scewps_config.cpp"
 #include "4coder_dynamic_bindings.cpp"
 #include "4coder_scewps_default_framework.cpp"
-#include "4coder_clipboard.cpp"
+#include "4coder_scewps_clipboard.cpp"
 
 #define run_lister default_run_lister
 #define run_lister_with_refresh_handler default_run_lister_with_refresh_handler
@@ -86,8 +86,6 @@
 #define click_set_cursor default_click_set_cursor
 #define click_set_cursor_if_lbutton default_click_set_cursor_if_lbutton
 #define mouse_wheel_scroll default_mouse_wheel_scroll
-#define move_line_up default_move_line_up
-#define move_line_down default_move_line_down
 #define search default_search
 #define reverse_search default_reverse_search
 
@@ -105,8 +103,6 @@
 #undef click_set_cursor
 #undef click_set_cursor_if_lbutton
 #undef mouse_wheel_scroll
-#undef move_line_up
-#undef move_line_down
 #undef search
 #undef reverse_search
 

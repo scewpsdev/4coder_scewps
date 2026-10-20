@@ -108,6 +108,9 @@
     <ClCompile Include="4coder_scewps_draw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="4coder_scewps_clipboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="4coder_fleury_colors.h">

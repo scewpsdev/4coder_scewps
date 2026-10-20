@@ -5,7 +5,7 @@
 // TOP
 
 #define lerp(a, b, t) ((a) + ((b) - (a)) * (t))
-#define interp(a, b, dt, rate) ((a) + ((b) - (a)) * (1 - powf(rate, dt)))
+#define interp(a, b, dt, rate) ((b) + ((a) - (b)) * expf(-dt * rate))
 
 CUSTOM_COMMAND_SIG(sc_startup)
 CUSTOM_DOC("Default command for responding to a startup event")
@@ -111,7 +111,7 @@ sc_tick(Application_Links* app, Frame_Info frame_info) {
 	b32 interpolate_cursor = def_get_config_b32(vars_save_string_lit("interpolate_cursor"));
 	if (interpolate_cursor) {
 		Vec2_f32 cursor_size = next_cursor_rect.p1 - next_cursor_rect.p0;
-		current_cursor_rect.p0 = interp(current_cursor_rect.p0, next_cursor_rect.p0, frame_info.animation_dt, 1e-20f);
+		current_cursor_rect.p0 = interp(current_cursor_rect.p0, next_cursor_rect.p0, frame_info.animation_dt, 50);
 		current_cursor_rect.p1 = current_cursor_rect.p0 + cursor_size;
 		if (near_zero(current_cursor_rect.p0 - next_cursor_rect.p0, 0.5f)) {
 			current_cursor_rect = next_cursor_rect;
@@ -885,7 +885,7 @@ render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	case FCoderMode_Original:
 	{
 		Rect_f32 clip = draw_set_clip(app, prev_clip);
-		sc_draw_cursor_emacs(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness);
+		sc_draw_cursor_emacs(app, view_id, is_active_view, buffer, text_layout_id, metrics, cursor_roundness, mark_thickness);
 		draw_set_clip(app, clip);
 	}break;
 	case FCoderMode_NotepadLike:

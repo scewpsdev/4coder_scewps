@@ -1018,7 +1018,7 @@ draw_button(Application_Links *app, Rect_f32 rect, Vec2_f32 mouse_p, Face_ID fac
 
 function void
 sc_draw_cursor_emacs(Application_Links* app, View_ID view_id, b32 is_active_view,
-	Buffer_ID buffer, Text_Layout_ID text_layout_id,
+	Buffer_ID buffer, Text_Layout_ID text_layout_id, Face_Metrics metrics,
 	f32 roundness, f32 outline_thickness) {
 	b32 has_highlight_range = draw_highlight_range(app, view_id, buffer, text_layout_id, roundness);
 	if (!has_highlight_range) {
@@ -1029,6 +1029,15 @@ sc_draw_cursor_emacs(Application_Links* app, View_ID view_id, b32 is_active_view
 
 		if (is_active_view) {
 			next_cursor_rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
+
+            f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+            next_cursor_rect.y0 -= half_line_skip;
+            next_cursor_rect.y1 += half_line_skip;
+            next_cursor_rect.x1 = Min(next_cursor_rect.x1, next_cursor_rect.x0 + metrics.max_advance);
+
+            f32 distance = Max(abs_f32(next_cursor_rect.x0 - current_cursor_rect.x0), abs_f32(next_cursor_rect.y0 - current_cursor_rect.y0));
+            if (distance < metrics.max_advance * 1.5f || distance < metrics.text_height * 1.5f)
+                current_cursor_rect = next_cursor_rect;
 		}
 
 		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
@@ -1108,6 +1117,15 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
 	i64 cursor_pos = view_get_cursor_pos(app, view_id);
 	if (is_active_view) {
 		next_cursor_rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
+
+        f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+        next_cursor_rect.y0 -= half_line_skip;
+        next_cursor_rect.y1 += half_line_skip;
+        next_cursor_rect.x1 = Min(next_cursor_rect.x1, next_cursor_rect.x0 + metrics.max_advance);
+
+        f32 distance = Max(abs_f32(next_cursor_rect.x0 - current_cursor_rect.x0), abs_f32(next_cursor_rect.y0 - current_cursor_rect.y0));
+        if (distance < metrics.max_advance * 1.5f || distance < metrics.text_height * 1.5f)
+            current_cursor_rect = next_cursor_rect;
 	}
 
 	if (!has_highlight_range) {
@@ -1121,18 +1139,22 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
 
 		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
 
+        b32 notepad_cursor_block = def_get_config_b32(vars_save_string_lit("cursor_notepad_block"));
+
 		if (cursor_blink_state) {
 			Rect_f32 rect = current_cursor_rect;
+            if (!notepad_cursor_block) {
+                rect.x1 = rect.x0 + 2;
+            }
 			draw_rectangle(app, rect, roundness, color);
 		}
 
 		if (is_active_view) {
-			if (rect_overlap(next_cursor_rect, current_cursor_rect) && cursor_blink_state) {
+			if (notepad_cursor_block && rect_overlap(next_cursor_rect, current_cursor_rect) && cursor_blink_state) {
 				paint_text_color_pos(app, text_layout_id, cursor_pos,
 					fcolor_id(defcolor_at_cursor));
 			}
-		}
-		else {
+		} else if (notepad_cursor_block) {
 			Rect_f32 rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
 			draw_rectangle_outline(app, rect, roundness, outline_thickness, color);
 		}

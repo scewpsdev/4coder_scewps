@@ -42,8 +42,20 @@ defcolor_brace_highlight       = defcolor_highlight;
 defcolor_paren_highlight       = defcolor_brace_highlight;
 defcolor_brace_line            = 0xff5b5b5b;
 defcolor_symbol_highlight      = 0xff585b70;
+
+defcolor_lang_enum_value       = 0xffb8d7a3;
+defcolor_lang_variable         = 0xff9cdcfe;
+
 defcolor_error                 = 0xFFff5766;
 defcolor_warning               = 0xFFff5766;
+
+defcolor_icon_type		       = 0xff51b4ff;
+defcolor_icon_constant         = 0xff825eab;
+defcolor_icon_function	       = 0xff825eab;
+defcolor_icon_global	       = 0xff4daaf2;
+defcolor_icon_variable	       = 0xff4daaf2;
+defcolor_icon_macro	           = 0xfff3826c;
+defcolor_icon_enum_value       = 0xffffde91;
 
 fleury_color_syntax_crap           = 0xffb4b4b4;
 fleury_color_operators             = 0xffb4b4b4;
@@ -51,7 +63,7 @@ fleury_color_index_product_type    = 0xff4ec9b0;
 fleury_color_index_sum_type        = fleury_color_index_product_type;
 fleury_color_index_function        = 0xffdcdcaa;
 fleury_color_index_macro           = 0xffbeb7ff;
-fleury_color_index_constant        = 0xffb8d7a3;
+fleury_color_index_constant        = fleury_color_index_macro;
 fleury_color_index_comment_tag     = 0xffffae00;
 fleury_color_index_decl            = 0xffc8c8c8;
 fleury_color_cursor_macro          = 0xffde2368;
