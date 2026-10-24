@@ -66,7 +66,7 @@
 #define run_lister_with_refresh_handler default_run_lister_with_refresh_handler
 #define lister_add_item default_lister_add_item
 #define get_choice_from_user default_get_choice_from_user
-#include "4coder_lister_base.cpp"
+#include "4coder_scewps_lister_base.cpp"
 #undef run_lister
 #undef run_lister_with_refresh_handler
 #undef lister_add_item
@@ -109,11 +109,7 @@
 #include "4coder_insertion.cpp"
 #include "4coder_eol.cpp"
 
-#define command_lister default_command_lister
-#define theme_lister default_theme_lister
 #include "4coder_scewps_lists.cpp"
-#undef command_lister
-#undef theme_lister
 
 #include "4coder_scewps_auto_indent.cpp"
 #include "4coder_scewps_search.cpp"

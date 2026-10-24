@@ -1542,7 +1542,7 @@ CUSTOM_DOC("Deletes the file of the current buffer if 4coder has the appropriate
     }
 }
 
-CUSTOM_COMMAND_SIG(save_as)
+CUSTOM_COMMAND_SIG(save_to_query)
 CUSTOM_DOC("Queries the user for a file name and saves the contents of the current buffer, altering the buffer's name too.")
 {
     View_ID view = get_active_view(app, Access_Always);
@@ -2217,7 +2217,7 @@ CUSTOM_DOC("Advances forward through the undo history in the buffer containing t
 CUSTOM_COMMAND_SIG(open_in_other)
 CUSTOM_DOC("Interactively opens a file in the other panel.")
 {
-    change_active_panel_send_command(app, interactive_open_or_new);
+    change_active_panel_send_command(app, open_or_new_file);
 }
 
 CUSTOM_COMMAND_SIG(default_file_externally_modified)

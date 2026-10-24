@@ -242,114 +242,11 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	draw_set_clip(app, prev_clip);
 }
 
-function String_Const_u8
-string_remove_last_word(String_Const_u8 str) {
-	if (str.size == 0)
-		return str;
-
-	i32 num_deleted_chars = 0;
-	b32 identifier_found = false;
-	for (;;) {
-		// scan unicode backwards to determine start byte
-		u64 i = str.size - 1;
-		for (; i > 0; --i) {
-			if (str.str[i] <= 0x7F || str.str[i] >= 0xC0) {
-				break;
-			}
-		}
-		Character_Consume_Result ch = utf8_consume(&str.str[i], str.size - i);
-		if (character_is_alpha_numeric(ch.codepoint) || !identifier_found) {
-			str = backspace_utf8(str);
-			num_deleted_chars++;
-			if (character_is_alpha_numeric(ch.codepoint)) {
-				identifier_found = true;
-			}
-		}
-		else {
-			if (num_deleted_chars == 0) {
-				str = backspace_utf8(str);
-				num_deleted_chars++;
-			}
-			break;
-		}
-	}
-	return str;
-}
-
-function void
-sc_lister_backspace_handler(Application_Links* app) {
-	View_ID view = get_active_view(app, Access_Always);
-	Lister* lister = view_get_lister(app, view);
-	if (lister != 0) {
-
-		User_Input input = get_current_input(app);
-
-		if (has_modifier(&input, KeyCode_Control)) {
-			String_Const_u8 text_field = lister->text_field.string;
-			String_Const_u8 new_hot = string_remove_last_word(text_field);
-			lister->text_field.size = new_hot.size;
-			lister->key_string.size = new_hot.size;
-		}
-		else {
-			lister->text_field.string = backspace_utf8(lister->text_field.string);
-			lister->key_string.string = backspace_utf8(lister->key_string.string);
-		}
-
-		lister->item_index = 0;
-		lister_zero_scroll(lister);
-		lister_update_filtered_list(app, lister);
-	}
-}
-
-function void
-sc_file_lister_backspace_handler(Application_Links* app) {
-	View_ID view = get_this_ctx_view(app, Access_Always);
-	Lister* lister = view_get_lister(app, view);
-	if (lister != 0) {
-		if (lister->text_field.size > 0) {
-			u8 last_char = lister->text_field.str[lister->text_field.size - 1];
-			lister->text_field.string = backspace_utf8(lister->text_field.string);
-			User_Input input = get_current_input(app);
-			b32 ctrl = has_modifier(&input, KeyCode_Control);
-			if (character_is_slash(last_char) || ctrl) {
-				String_Const_u8 text_field = lister->text_field.string;
-				String_Const_u8 new_hot = string_remove_last_folder(text_field);
-				lister->text_field.size = new_hot.size;
-				set_hot_directory(app, new_hot);
-				// TODO(allen): We have to protect against lister_call_refresh_handler
-				// changing the text_field here. Clean this up.
-				String_u8 dingus = lister->text_field;
-				lister_call_refresh_handler(app, lister);
-				lister->text_field = dingus;
-			}
-			else {
-				String_Const_u8 text_field = lister->text_field.string;
-				String_Const_u8 new_key = string_front_of_path(text_field);
-				lister_set_key(lister, new_key);
-			}
-
-			lister->item_index = 0;
-			lister_zero_scroll(lister);
-			lister_update_filtered_list(app, lister);
-		}
-	}
-}
-
 // need to forward declare these unfortunately since they are defined in 4coder_lists.cpp
 // which depends on our version of run_lister so it has to be below this.
 
-function void
-lister__backspace_text_field__file_path(Application_Links* app);
-function void
-lister__backspace_text_field__default(Application_Links* app);
-
 function Lister_Result
 run_lister(Application_Links* app, Lister* lister) {
-
-	if (lister->handlers.backspace == lister__backspace_text_field__file_path)
-		lister->handlers.backspace = sc_file_lister_backspace_handler;
-	else if (lister->handlers.backspace == lister__backspace_text_field__default)
-		lister->handlers.backspace = sc_lister_backspace_handler;
 
 	lister->filter_restore_point = begin_temp(lister->arena);
 	lister_update_filtered_list(app, lister);

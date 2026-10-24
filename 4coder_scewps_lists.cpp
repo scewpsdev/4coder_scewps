@@ -125,58 +125,83 @@ command_lister_status_bindings(Mapping *mapping, Command_Map_ID map_id){
     return(result);
 }
 
+function void
+add_command_to_list(Lister* lister, i32 command_id, Arena* arena, Command_Lister_Status_Rule* status_rule) {
+    Custom_Command_Function* proc = fcoder_metacmd_table[command_id].proc;
+    String_Const_u8 status = {};
+    switch (status_rule->mode) {
+    case CommandLister_Descriptions:
+    {
+        status = SCu8(fcoder_metacmd_table[command_id].description);
+    }break;
+    case CommandLister_Bindings:
+    {
+        Command_Trigger_List triggers = map_get_triggers_recursive(arena, status_rule->mapping, status_rule->map_id, proc);
+
+        List_String_Const_u8 list = {};
+        for (Command_Trigger* node = triggers.first;
+            node != 0;
+            node = node->next) {
+            command_trigger_stringize(arena, &list, node);
+            if (node->next != 0) {
+                string_list_push(arena, &list, string_u8_litexpr(" "));
+            }
+        }
+
+        status = string_list_flatten(arena, list);
+    }break;
+    }
+
+    String_Const_u8 cmd = SCu8(fcoder_metacmd_table[command_id].name);
+    String_Const_u8 name = push_string_copy(arena, cmd);
+    for (i32 k = 0; k < name.size; k++) {
+        if (name.str[k] == '_') {
+            name.str[k] = ' ';
+        }
+        else if (k == 0) {
+            name.str[k] = character_to_upper(name.str[k]);
+        }
+    }
+
+    String_Const_u8 description = SCu8(fcoder_metacmd_table[command_id].description);
+
+    lister_add_item(lister, name, status, description,
+        (void*)proc, 0);
+}
+
 function Custom_Command_Function*
 get_command_from_user(Application_Links *app, String_Const_u8 query, i32 *command_ids, i32 command_id_count, Command_Lister_Status_Rule *status_rule){
-    if (command_ids == 0){
+    if (command_ids == 0) {
         command_id_count = command_one_past_last_id;
     }
-    
+
     Scratch_Block scratch(app);
     Lister_Block lister(app, scratch);
     lister_set_query(lister, query);
     lister_set_default_handlers(lister);
-    
-    for (i32 i = 0; i < command_id_count; i += 1){
+
+    if (last_used_command) {
+        add_command_to_list(lister, get_command_id(last_used_command), scratch, status_rule);
+    }
+
+    for (i32 i = 0; i < command_id_count; i += 1) {
         i32 j = i;
-        if (command_ids != 0){
+        if (command_ids != 0) {
             j = command_ids[i];
         }
         j = clamp(0, j, command_one_past_last_id);
-        
-        Custom_Command_Function *proc = fcoder_metacmd_table[j].proc;
-        String_Const_u8 status = {};
-        switch (status_rule->mode){
-            case CommandLister_Descriptions:
-            {
-                status = SCu8(fcoder_metacmd_table[j].description);
-            }break;
-            case CommandLister_Bindings:
-            {
-                Command_Trigger_List triggers = map_get_triggers_recursive(scratch, status_rule->mapping, status_rule->map_id, proc);
-                
-                List_String_Const_u8 list = {};
-                for (Command_Trigger *node = triggers.first;
-                     node != 0;
-                     node = node->next){
-                    command_trigger_stringize(scratch, &list, node);
-                    if (node->next != 0){
-                        string_list_push(scratch, &list, string_u8_litexpr(" "));
-                    }
-                }
-                
-                status = string_list_flatten(scratch, list);
-            }break;
+
+        if (get_command_id(last_used_command) != j) {
+            add_command_to_list(lister, j, scratch, status_rule);
         }
-        
-        lister_add_item(lister, SCu8(fcoder_metacmd_table[j].name), status,
-                        (void*)proc, 0);
     }
-    
+
     Lister_Result l_result = run_lister(app, lister);
-    
-    Custom_Command_Function *result = 0;
-    if (!l_result.canceled){
+
+    Custom_Command_Function* result = 0;
+    if (!l_result.canceled) {
         result = (Custom_Command_Function*)l_result.user_data;
+        last_used_command = result;
     }
     return(result);
 }
@@ -265,39 +290,35 @@ lister__write_character__file_path(Application_Links *app){
 function void
 lister__backspace_text_field__file_path(Application_Links *app){
     View_ID view = get_this_ctx_view(app, Access_Always);
-    Lister *lister = view_get_lister(app, view);
-    if (lister != 0){
-        if (lister->text_field.size > 0){
-            char last_char = lister->text_field.str[lister->text_field.size - 1];
-            lister->text_field.string = backspace_utf8(lister->text_field.string);
-            if (character_is_slash(last_char)){
-                User_Input input = get_current_input(app);
-                String_Const_u8 text_field = lister->text_field.string;
-                String_Const_u8 new_hot = string_remove_last_folder(text_field);
-                b32 is_modified = has_modifier(&input, KeyCode_Control);
-                b32 whole_word_when_mod = def_get_config_b32(vars_save_string_lit("lister_whole_word_backspace_when_modified"));
-                b32 whole_word_backspace = (is_modified == whole_word_when_mod);
-                if (whole_word_backspace){
-                    lister->text_field.size = new_hot.size;
-                }
-                set_hot_directory(app, new_hot);
-                // TODO(allen): We have to protect against lister_call_refresh_handler
-                // changing the text_field here. Clean this up.
-                String_u8 dingus = lister->text_field;
-                lister_call_refresh_handler(app, lister);
-                lister->text_field = dingus;
-            }
-            else{
-                String_Const_u8 text_field = lister->text_field.string;
-                String_Const_u8 new_key = string_front_of_path(text_field);
-                lister_set_key(lister, new_key);
-            }
-            
-            lister->item_index = 0;
-            lister_zero_scroll(lister);
-            lister_update_filtered_list(app, lister);
-        }
-    }
+	Lister* lister = view_get_lister(app, view);
+	if (lister != 0) {
+		if (lister->text_field.size > 0) {
+			u8 last_char = lister->text_field.str[lister->text_field.size - 1];
+			lister->text_field.string = backspace_utf8(lister->text_field.string);
+			User_Input input = get_current_input(app);
+			b32 ctrl = has_modifier(&input, KeyCode_Control);
+			if (character_is_slash(last_char) || ctrl) {
+				String_Const_u8 text_field = lister->text_field.string;
+				String_Const_u8 new_hot = string_remove_last_folder(text_field);
+				lister->text_field.size = new_hot.size;
+				set_hot_directory(app, new_hot);
+				// TODO(allen): We have to protect against lister_call_refresh_handler
+				// changing the text_field here. Clean this up.
+				String_u8 dingus = lister->text_field;
+				lister_call_refresh_handler(app, lister);
+				lister->text_field = dingus;
+			}
+			else {
+				String_Const_u8 text_field = lister->text_field.string;
+				String_Const_u8 new_key = string_front_of_path(text_field);
+				lister_set_key(lister, new_key);
+			}
+
+			lister->item_index = 0;
+			lister_zero_scroll(lister);
+			lister_update_filtered_list(app, lister);
+		}
+	}
 }
 
 function void
@@ -609,7 +630,7 @@ activate_open_or_new__generic(Application_Links *app, View_ID view,
     return(result);
 }
 
-CUSTOM_UI_COMMAND_SIG(interactive_open_or_new)
+CUSTOM_UI_COMMAND_SIG(open_or_new_file)
 CUSTOM_DOC("Interactively open a file out of the file system.")
 {
     for (;;){
@@ -658,7 +679,7 @@ CUSTOM_DOC("Interactively open a file out of the file system.")
     }
 }
 
-CUSTOM_UI_COMMAND_SIG(interactive_new)
+CUSTOM_UI_COMMAND_SIG(new_file)
 CUSTOM_DOC("Interactively creates a new file.")
 {
     for (;;){
@@ -712,7 +733,7 @@ CUSTOM_DOC("Interactively creates a new file.")
     }
 }
 
-CUSTOM_UI_COMMAND_SIG(interactive_open)
+CUSTOM_UI_COMMAND_SIG(open_file)
 CUSTOM_DOC("Interactively opens a file.")
 {
     for (;;){
@@ -756,28 +777,92 @@ CUSTOM_DOC("Interactively opens a file.")
     }
 }
 
+CUSTOM_UI_COMMAND_SIG(save_as)
+CUSTOM_DOC("Interactively saves the current file to another path.")
+{
+    for (;;) {
+        Scratch_Block scratch(app);
+        View_ID view = get_this_ctx_view(app, Access_Always);
+        Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+
+        File_Name_Result result = get_file_name_from_user(app, scratch, "New:",
+            view);
+        if (result.canceled) break;
+
+        // NOTE(allen): file_name from the text field always
+        // unless this is a folder or a mouse click.
+        String_Const_u8 file_name = result.file_name_in_text_field;
+        if (result.is_folder || result.clicked) {
+            file_name = result.file_name_activated;
+        }
+        if (file_name.size == 0) break;
+
+        String_Const_u8 path = result.path_in_text_field;
+        String_Const_u8 full_file_name =
+            push_u8_stringf(scratch, "%.*s/%.*s",
+                string_expand(path), string_expand(file_name));
+
+        if (result.is_folder) {
+            set_hot_directory(app, full_file_name);
+            continue;
+        }
+
+        if (character_is_slash(file_name.str[file_name.size - 1])) {
+            File_Attributes attribs = system_quick_file_attributes(scratch, full_file_name);
+            if (HasFlag(attribs.flags, FileAttribute_IsDirectory)) {
+                set_hot_directory(app, full_file_name);
+                continue;
+            }
+            if (string_looks_like_drive_letter(file_name)) {
+                set_hot_directory(app, file_name);
+                continue;
+            }
+            if (query_create_folder(app, file_name)) {
+                set_hot_directory(app, full_file_name);
+                continue;
+            }
+            break;
+        }
+
+        List_String_Const_u8 new_file_name_list = {};
+        string_list_push(scratch, &new_file_name_list, push_hot_directory(app, scratch));
+        string_list_push(scratch, &new_file_name_list, full_file_name);
+        String_Const_u8 new_file_name = string_list_flatten(scratch, new_file_name_list);
+        if (buffer_save(app, buffer, new_file_name, BufferSave_IgnoreDirtyFlag)) {
+            Buffer_ID new_buffer = create_buffer(app, new_file_name, BufferCreate_NeverNew | BufferCreate_JustChangedFile);
+            if (new_buffer != 0 && new_buffer != buffer) {
+                view_set_buffer(app, view, new_buffer, 0);
+            }
+        }
+
+        break;
+    }
+}
+
 ////////////////////////////////
 
 CUSTOM_UI_COMMAND_SIG(command_lister)
 CUSTOM_DOC("Opens an interactive list of all registered commands.")
 {
     View_ID view = get_this_ctx_view(app, Access_Always);
-    if (view != 0){
+    if (view != 0) {
         Command_Lister_Status_Rule rule = {};
         Buffer_ID buffer = view_get_buffer(app, view, Access_Visible);
         Managed_Scope buffer_scope = buffer_get_managed_scope(app, buffer);
-        Command_Map_ID *map_id_ptr = scope_attachment(app, buffer_scope, buffer_map_id, Command_Map_ID);
-        if (map_id_ptr != 0){
+        Command_Map_ID* map_id_ptr = scope_attachment(app, buffer_scope, buffer_map_id, Command_Map_ID);
+        if (map_id_ptr != 0) {
             rule = command_lister_status_bindings(&framework_mapping, *map_id_ptr);
         }
-        else{
+        else {
             rule = command_lister_status_descriptions();
         }
-        Custom_Command_Function *func = get_command_from_user(app, "Command:", &rule);
-        if (func != 0){
+        Custom_Command_Function* func = get_command_from_user(app, "Command:", &rule);
+        if (func != 0) {
             view_enqueue_command_function(app, view, func);
         }
     }
+
+    no_mark_snap_to_cursor(app, view);
 }
 
 ////////////////////////////////
@@ -785,8 +870,8 @@ CUSTOM_DOC("Opens an interactive list of all registered commands.")
 CUSTOM_UI_COMMAND_SIG(theme_lister)
 CUSTOM_DOC("Opens an interactive list of all registered themes.")
 {
-    Color_Table *color_table = get_color_table_from_user(app);
-    if (color_table != 0){
+    Color_Table* color_table = get_color_table_from_user(app);
+    if (color_table != 0) {
         active_color_table = *color_table;
     }
 }

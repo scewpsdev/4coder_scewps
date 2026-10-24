@@ -94,8 +94,8 @@
 	[ ] minimap
 	[ ] relative line numbers
 	[ ] vim mode
-	[ ] brace highlight height
-	[ ] cmd palette capitalization
+	[X] brace highlight height
+	[X] cmd palette capitalization
 	[ ] save as file lister
 	[ ] top buffer margin (half line skip)
 	[ ] open config cmd, open bindings, open current theme

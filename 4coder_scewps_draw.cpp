@@ -94,15 +94,19 @@ draw_margin(Application_Links *app, Rect_f32 outer, Rect_f32 inner, FColor color
 }
 
 function void
-draw_character_block(Application_Links *app, Text_Layout_ID layout, i64 pos, f32 roundness, ARGB_Color color){
+draw_character_block(Application_Links *app, Text_Layout_ID layout, Buffer_ID buffer, i64 pos, f32 roundness, ARGB_Color color){
     Rect_f32 rect = text_layout_character_on_screen(app, layout, pos);
+    Face_Metrics metrics = get_face_metrics(app, get_face_id(app, buffer));
+    f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+    rect.y0 -= half_line_skip;
+    rect.y1 += half_line_skip;
     draw_rectangle(app, rect, roundness, color);
 }
 
 function void
-draw_character_block(Application_Links *app, Text_Layout_ID layout, i64 pos, f32 roundness, FColor color){
+draw_character_block(Application_Links *app, Text_Layout_ID layout, Buffer_ID buffer, i64 pos, f32 roundness, FColor color){
     ARGB_Color argb = fcolor_resolve(color);
-    draw_character_block(app, layout, pos, roundness, argb);
+    draw_character_block(app, layout, buffer, pos, roundness, argb);
 }
 
 function void
@@ -762,8 +766,8 @@ draw_enclosures(Application_Links* app, Text_Layout_ID text_layout_id, Buffer_ID
 		else {
 			if (back_colors != 0) {
 				i32 back_index = color_index % back_count;
-				draw_character_block(app, text_layout_id, range.min, 0.f, back_colors[back_index]);
-				draw_character_block(app, text_layout_id, range.max - 1, 0.f, back_colors[back_index]);
+				draw_character_block(app, text_layout_id, buffer, range.min, 0.f, back_colors[back_index]);
+				draw_character_block(app, text_layout_id, buffer, range.max - 1, 0.f, back_colors[back_index]);
 			}
 			if (fore_colors != 0) {
 				i32 fore_index = color_index % fore_count;
@@ -888,7 +892,7 @@ draw_original_4coder_style_cursor_mark_highlight(Application_Links *app, View_ID
         i64 cursor_pos = view_get_cursor_pos(app, view_id);
         i64 mark_pos = view_get_mark_pos(app, view_id);
         if (is_active_view){
-            draw_character_block(app, text_layout_id, cursor_pos, roundness,
+            draw_character_block(app, text_layout_id, buffer, cursor_pos, roundness,
                                  fcolor_id(defcolor_cursor, cursor_sub_id));
             paint_text_color_pos(app, text_layout_id, cursor_pos,
                                  fcolor_id(defcolor_at_cursor));
@@ -1118,9 +1122,6 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
 	if (is_active_view) {
 		next_cursor_rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
 
-        f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
-        next_cursor_rect.y0 -= half_line_skip;
-        next_cursor_rect.y1 += half_line_skip;
         next_cursor_rect.x1 = Min(next_cursor_rect.x1, next_cursor_rect.x0 + metrics.max_advance);
 
         f32 distance = Max(abs_f32(next_cursor_rect.x0 - current_cursor_rect.x0), abs_f32(next_cursor_rect.y0 - current_cursor_rect.y0));
@@ -1146,6 +1147,9 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
             if (!notepad_cursor_block) {
                 rect.x1 = rect.x0 + 2;
             }
+            f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+            rect.y0 -= half_line_skip;
+            rect.y1 += half_line_skip;
 			draw_rectangle(app, rect, roundness, color);
 		}
 
