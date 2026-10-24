@@ -220,7 +220,7 @@ open_build_footer_panel(Application_Links* app) {
         View_ID active_view = get_active_view(app, Access_Always);
         View_ID view = get_next_view_looped_primary_panels(app, active_view, Access_Always);
         build_footer_panel_view_id = open_footer_panel(app, view);
-        view_set_active(app, view);
+        view_set_active(app, active_view);
     }
     return(build_footer_panel_view_id);
 }

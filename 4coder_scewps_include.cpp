@@ -118,7 +118,7 @@
 #include "4coder_scewps_auto_indent.cpp"
 #include "4coder_scewps_search.cpp"
 #include "4coder_scewps_completion.cpp"
-#include "4coder_jumping.cpp"
+#include "4coder_scewps_jumping.cpp"
 #include "4coder_scewps_jump_sticky.cpp"
 #include "4coder_jump_lister.cpp"
 

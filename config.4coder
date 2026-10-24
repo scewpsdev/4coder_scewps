@@ -58,6 +58,8 @@ enable_virtual_whitespace = false;
 virtual_whitespace_regular_indent = 4;
 enable_code_wrapping = false;
 
+enable_symbol_completion = true;
+
 // This only applies to code files in code-wrapping mode.
 // Plain text and code files without virtual-whitespace will not be effected.
 automatically_indent_text_on_save = true;

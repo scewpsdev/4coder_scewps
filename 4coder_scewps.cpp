@@ -94,6 +94,11 @@
 	[ ] minimap
 	[ ] relative line numbers
 	[ ] vim mode
+	[ ] brace highlight height
+	[ ] cmd palette capitalization
+	[ ] save as file lister
+	[ ] top buffer margin (half line skip)
+	[ ] open config cmd, open bindings, open current theme
 
 
 	Commands:
@@ -103,17 +108,11 @@
 	- jump_to_definition_at_cursor_other_panel
 	- backspace_alpha_numeric_or_camel_boundary
 	- delete_alpha_numeric_or_camel_boundary
-
-	Colors
-	- defcolor_line_numbers_highlight
-	- defcolor_brace_highlight
-	- defcolor_brace_line
-	- defcolor_symbol_highlight
-	- defcolor_error
-	- defcolor_warning
+	- save_to_query -> save_as
 
 	Config settings:
 	- b32 interpolate_cursor
+	- b32 cursor_notepad_block
 	- u64 lister_item_height
 	- u64 lister_width
 	- u64 lister_height
@@ -127,6 +126,25 @@
 	- u64 file_roundness
 	- string ui_font_name
 	- u64 ui_font_size
+	- b32 enable_symbol_completion
+
+	Theme colors:
+	- defcolor_line_numbers_highlight
+	- defcolor_brace_highlight
+	- defcolor_paren_highlight
+	- defcolor_brace_line
+	- defcolor_symbol_highlight
+	- defcolor_lang_enum_value
+	- defcolor_lang_variable
+	- defcolor_error
+	- defcolor_warning
+	- defcolor_icon_type
+	- defcolor_icon_constant
+	- defcolor_icon_function
+	- defcolor_icon_global
+	- defcolor_icon_variable
+	- defcolor_icon_macro
+	- defcolor_icon_enum_value
 
 	Fixes:
 	- fixed seek_beginning_of_line: scrolls view to left side and toggles between first non-whitespace character and actual beginning
@@ -251,8 +269,8 @@ custom_layer_init(Application_Links* app) {
 	// custom hooks
 	set_custom_hook(app, HookID_ViewEventHandler, sc_view_input_handler);
 	set_custom_hook(app, HookID_Tick, sc_tick);
-	set_custom_hook(app, HookID_DeltaRule, original_delta);
-	set_custom_hook_memory_size(app, HookID_DeltaRule, delta_ctx_size(original_delta_memory_size));
+	set_custom_hook(app, HookID_DeltaRule, fixed_time_cubic_delta);
+	set_custom_hook_memory_size(app, HookID_DeltaRule, delta_ctx_size(fixed_time_cubic_delta_memory_size));
 	set_custom_hook(app, HookID_RenderCaller, sc_render);
 	set_custom_hook(app, HookID_WholeScreenRenderCaller, sc_whole_screen_render_caller);
 	set_custom_hook(app, HookID_Layout, sc_layout);

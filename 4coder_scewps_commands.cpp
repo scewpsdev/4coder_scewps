@@ -451,6 +451,13 @@ CUSTOM_DOC("Reloads config file")
 	}
 }
 
+CUSTOM_COMMAND_SIG(open_config)
+CUSTOM_DOC("Opens config file in new buffer")
+{
+	Buffer_ID buffer;
+	open_file(app, &buffer, string_u8_litexpr("config.4coder"), false, false);
+}
+
 CUSTOM_COMMAND_SIG(reload_bindings)
 CUSTOM_DOC("Reloads bindings file")
 {

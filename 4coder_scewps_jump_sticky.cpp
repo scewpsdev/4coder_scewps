@@ -40,7 +40,7 @@ binary_search(i64 *array, i32 stride, i32 count, i64 x){
 
 internal Sticky_Jump_Array
 parse_buffer_to_jump_array(Application_Links *app, Arena *arena, Buffer_ID buffer){
-    Sticky_Jump_Node *jump_first = 0;;
+    Sticky_Jump_Node *jump_first = 0;
     Sticky_Jump_Node *jump_last = 0;
     i32 jump_count = 0;
     

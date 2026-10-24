@@ -126,20 +126,23 @@ write_text(Application_Links *app, String_Const_u8 insert){
             view_set_cursor_and_preferred_x(app, view, seek_pos(pos + insert.size));
 
             // open completion list
-            Managed_Scope scope = view_get_managed_scope(app, view);
-            Word_Complete_Menu** menu_ptr = scope_attachment(app, scope, view_word_complete_menu, Word_Complete_Menu*);
-            if (insert.size == 1 && is_alpha_numeric_underscore_not_newline(insert.str[0])) {
-                if (*menu_ptr == nullptr) { // if there is no completion list, create it
-                    view_enqueue_command_function(app, view, open_completion_list);
+            b32 enable_symbol_completion = def_get_config_b32(vars_save_string_lit("enable_symbol_completion"));
+            if (enable_symbol_completion) {
+                Managed_Scope scope = view_get_managed_scope(app, view);
+                Word_Complete_Menu** menu_ptr = scope_attachment(app, scope, view_word_complete_menu, Word_Complete_Menu*);
+                if (insert.size == 1 && is_alpha_numeric_underscore_not_newline(insert.str[0])) {
+                    if (*menu_ptr == nullptr) { // if there is no completion list, create it
+                        view_enqueue_command_function(app, view, open_completion_list);
+                    }
                 }
-            }
-            /*
-            else {
-                if (*menu_ptr != nullptr) { // if there is a completion list, destroy it
-                    close_completion_list(app, view);
+                /*
+                else {
+                    if (*menu_ptr != nullptr) { // if there is a completion list, destroy it
+                        close_completion_list(app, view);
+                    }
                 }
+                */
             }
-            */
         }
     }
 }

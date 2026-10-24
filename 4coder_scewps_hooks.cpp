@@ -6,6 +6,7 @@
 
 #define lerp(a, b, t) ((a) + ((b) - (a)) * (t))
 #define interp(a, b, dt, rate) ((b) + ((a) - (b)) * expf(-dt * rate))
+#define interp2(a, b, dt, rate) ((a) + ((b) - (a)) * (1 - powf(rate, dt)))
 
 CUSTOM_COMMAND_SIG(sc_startup)
 CUSTOM_DOC("Default command for responding to a startup event")
@@ -162,7 +163,7 @@ sc_tick(Application_Links* app, Frame_Info frame_info) {
 		color_transition = 0;
 	}
 	if (color_transition != 1) {
-		color_transition = interp(color_transition, 1, frame_info.animation_dt, 1e-3f);
+		color_transition = interp2(color_transition, 1, frame_info.animation_dt, 1e-3f);
 		if (near_zero(1 - color_transition, 0.01f)) {
 			color_transition = 1;
 		}
@@ -708,7 +709,7 @@ draw_error_annotations(Application_Links* app, View_ID view, Buffer_ID buffer, T
 		line.size -= msg_start;
 
 		Rect_f32 last_char = text_layout_character_on_screen(app, layout, get_line_end_pos(app, buffer, line_number) - 1);
-		Vec2_f32 position = V2f32(last_char.x1 + metrics.max_advance * 5, last_char.y0);
+		Vec2_f32 position = V2f32(last_char.x1 + metrics.normal_advance * 3, last_char.y0);
 
 		if (rect_width(last_char)) {
 			/*
