@@ -112,7 +112,7 @@ sc_tick(Application_Links* app, Frame_Info frame_info) {
 	b32 interpolate_cursor = def_get_config_b32(vars_save_string_lit("interpolate_cursor"));
 	if (interpolate_cursor) {
 		Vec2_f32 cursor_size = next_cursor_rect.p1 - next_cursor_rect.p0;
-		current_cursor_rect.p0 = interp(current_cursor_rect.p0, next_cursor_rect.p0, frame_info.animation_dt, 50);
+		current_cursor_rect.p0 = interp(current_cursor_rect.p0, next_cursor_rect.p0, frame_info.animation_dt, 30);
 		current_cursor_rect.p1 = current_cursor_rect.p0 + cursor_size;
 		if (near_zero(current_cursor_rect.p0 - next_cursor_rect.p0, 0.5f)) {
 			current_cursor_rect = next_cursor_rect;
@@ -749,9 +749,6 @@ render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 
 	// NOTE(allen): Cursor shape
 	Face_Metrics metrics = get_face_metrics(app, face_id);
-	u64 cursor_roundness_100 = def_get_config_u64(app, vars_save_string_lit("cursor_roundness"));
-	f32 cursor_roundness = metrics.normal_advance * cursor_roundness_100 * 0.01f;
-	f32 mark_thickness = (f32)def_get_config_u64(app, vars_save_string_lit("mark_thickness"));
 
 	// NOTE(allen): Token colorizing
 	Token_Array token_array = get_token_array_from_buffer(app, buffer);
@@ -835,10 +832,10 @@ render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 	view_get_setting(app, view_id, ViewSetting_ShowWhitespace, &show_whitespace);
 	if (show_whitespace) {
 		if (token_array.tokens == 0) {
-			draw_whitespace_highlight(app, buffer, text_layout_id, cursor_roundness);
+			draw_whitespace_highlight(app, buffer, text_layout_id, 0);
 		}
 		else {
-			draw_whitespace_highlight(app, text_layout_id, &token_array, cursor_roundness);
+			draw_whitespace_highlight(app, text_layout_id, &token_array, 0);
 		}
 	}
 
@@ -881,22 +878,8 @@ render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 			colors.vals, colors.count);
 	}
 
-	// NOTE(allen): Cursor
-	switch (fcoder_mode) {
-	case FCoderMode_Original:
-	{
-		Rect_f32 clip = draw_set_clip(app, prev_clip);
-		sc_draw_cursor_emacs(app, view_id, is_active_view, buffer, text_layout_id, metrics, cursor_roundness, mark_thickness);
-		draw_set_clip(app, clip);
-	}break;
-	case FCoderMode_NotepadLike:
-	{
-		// remove clipping rect so the cursor doesn't get clipped by the margin
-		// when crossing buffer boundaries
-		Rect_f32 clip = draw_set_clip(app, prev_clip);
-		sc_draw_cursor_notepad(app, view_id, is_active_view, buffer, text_layout_id, metrics, cursor_roundness, mark_thickness);
-		draw_set_clip(app, clip);
-	}break;
+	if (!lister_open) {
+		draw_cursor(app, view_id, is_active_view, buffer, text_layout_id, metrics, prev_clip);
 	}
 
 	// NOTE(allen): Fade ranges
@@ -1138,6 +1121,7 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	Rect_f32 file_rect = region;
 
 	Rect_f32 prev_clip = draw_set_clip(app, region);
+	region.y0 += f32_ceil32(face_metrics.line_skip / 2); // keep small spacing at top so the text doesnt touch the margin
 
 	Buffer_Scroll scroll = view_get_buffer_scroll(app, view_id);
 
@@ -1211,6 +1195,8 @@ sc_buffer_region(Application_Links* app, View_ID view_id, Rect_f32 region) {
 
 	u64 file_margin = def_get_config_u64(app, vars_save_string_lit("file_margin"), 3);
 	region = rect_inner(region, f32(file_margin));
+
+	region.y0 += f32_ceil32(metrics.line_skip / 2);
 
 	// NOTE(allen): query bars
 	{

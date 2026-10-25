@@ -232,12 +232,6 @@ CUSTOM_DOC("Delete characters between the cursor position and the first alphanum
 }
 
 
-function void
-sc_activate_cursor(Application_Links* app) {
-	cursor_blink_state = 2;
-	animate_in_n_milliseconds(app, 0);
-}
-
 CUSTOM_COMMAND_SIG(click_set_cursor_and_mark)
 CUSTOM_DOC("Sets the cursor position and mark to the mouse position.")
 {
@@ -323,8 +317,61 @@ CUSTOM_DOC("Reloads config file")
 CUSTOM_COMMAND_SIG(open_config)
 CUSTOM_DOC("Opens config file in new buffer")
 {
+	Scratch_Block scratch(app);
+	String_Const_u8 curdir = system_get_path(scratch, SystemPath_UserDirectory);
+	curdir = string_mod_replace_character(curdir, '\\', '/');
+	String_Const_u8 config_path = push_stringf(scratch, "%.*s/config.4coder", curdir.size, curdir.str);
+
 	Buffer_ID buffer;
-	open_file(app, &buffer, string_u8_litexpr("config.4coder"), false, false);
+	if (open_file(app, &buffer, config_path, false, false)) {
+		View_ID view = get_this_ctx_view(app, Access_Always);
+		view_set_buffer(app, view, buffer, 0);
+	}
+}
+
+CUSTOM_COMMAND_SIG(open_bindings)
+CUSTOM_DOC("Opens bindings file in new buffer")
+{
+	Scratch_Block scratch(app);
+	String_Const_u8 curdir = system_get_path(scratch, SystemPath_UserDirectory);
+	curdir = string_mod_replace_character(curdir, '\\', '/');
+	String_Const_u8 config_path = push_stringf(scratch, "%.*s/bindings.4coder", curdir.size, curdir.str);
+
+	Buffer_ID buffer;
+	if (open_file(app, &buffer, config_path, false, false)) {
+		View_ID view = get_this_ctx_view(app, Access_Always);
+		view_set_buffer(app, view, buffer, 0);
+	}
+}
+
+function Color_Table_Node* get_active_theme() {
+	i32 theme_id = get_theme_index(next_color_table);
+
+	Color_Table_Node* node = global_theme_list.first;
+	for (i32 i = 0; i < theme_id; i++) {
+		node = node->next;
+		if (!node)
+			break;
+	}
+
+	return node;
+}
+
+CUSTOM_COMMAND_SIG(open_current_theme)
+CUSTOM_DOC("Opens current theme file in new buffer")
+{
+	Scratch_Block scratch(app);
+	
+	if (Color_Table_Node* active_theme = get_active_theme()) {
+		String_Const_u8 curdir = system_get_path(scratch, SystemPath_Binary);
+		curdir = string_mod_replace_character(curdir, '\\', '/');
+		String_Const_u8 theme_path = push_stringf(scratch, "%.*sthemes/%.*s.4coder", curdir.size, curdir.str, active_theme->name.size, active_theme->name.str);
+		Buffer_ID buffer;
+		if (open_file(app, &buffer, theme_path, false, false)) {
+			View_ID view = get_this_ctx_view(app, Access_Always);
+			view_set_buffer(app, view, buffer, 0);
+		}
+	}
 }
 
 CUSTOM_COMMAND_SIG(reload_bindings)

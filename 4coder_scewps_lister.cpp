@@ -47,13 +47,15 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	const f32 min_lister_gap = 4;
 	lister_width = lister_width / 100.0f * rect_width(region);
 	lister_width = Min(Max(lister_width, line_height * 40), rect_width(region) - min_lister_gap * 2);
+	lister_width = f32_ceil32(lister_width);
 
 	f32 lister_height = (f32)def_get_config_u64(app, vars_save_string_lit("lister_height"), 90);
 	lister_height = lister_height / 100.0f * rect_height(region);
 	lister_height = Min(lister_height, rect_height(region) - min_lister_gap * 2);
+	lister_height = f32_ceil32(lister_height);
 
-	f32 margin_x = (region.x1 - region.x0 - lister_width) * 0.5f;
-	f32 margin_y = (region.y1 - region.y0 - lister_height) * 0.5f;
+	f32 margin_x = f32_floor32((region.x1 - region.x0 - lister_width) * 0.5f);
+	f32 margin_y = f32_floor32((region.y1 - region.y0 - lister_height) * 0.5f);
 	region.x0 += margin_x;
 	region.x1 -= margin_x;
 	region.y0 += margin_y;
@@ -66,8 +68,8 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 
 	draw_rectangle_and_margin(app, region, roundness, back_color, margin_color, lister_margin);
 
-	region = rect_inner(region, lister_margin);
-	region = rect_inner(region, lister_inner_margin);
+	Rect_f32 lister_rect = rect_inner(region, lister_margin);
+	region = rect_inner(lister_rect, lister_inner_margin);
 
 	Rect_f32 prev_clip = draw_set_clip(app, region);
 
@@ -114,10 +116,14 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 			Rect_f32 prect = draw_set_clip(app, Rf32(p.x, text_field_rect.y0, p.x + cap_width, text_field_rect.y1));
 			p.x += cap_width - width;
 			draw_fancy_line(app, face_id, fcolor_zero(), &text_field, p);
+
 			draw_set_clip(app, prect);
-		}
-		else {
+		} else {
 			draw_fancy_line(app, face_id, fcolor_zero(), &text_field, p);
+
+			f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+			Vec2_f32 cursor_pos = p + V2f32(width, -half_line_skip);
+			draw_cursor(app, view, metrics, cursor_pos, lister_rect);
 		}
 	}
 
@@ -297,11 +303,10 @@ run_lister(Application_Links* app, Lister* lister) {
 			{
 				if (lister->handlers.backspace != 0) {
 					lister->handlers.backspace(app);
-				}
-				else if (lister->handlers.key_stroke != 0) {
+				} else if (lister->handlers.key_stroke != 0) {
 					result = lister->handlers.key_stroke(app);
-				}
-				else {
+					sc_activate_cursor(app);
+				} else {
 					handled = false;
 				}
 			}break;
@@ -364,6 +369,7 @@ run_lister(Application_Links* app, Lister* lister) {
 			{
 				if (lister->handlers.key_stroke != 0) {
 					result = lister->handlers.key_stroke(app);
+					sc_activate_cursor(app);
 				}
 				else {
 					handled = false;

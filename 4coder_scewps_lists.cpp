@@ -630,7 +630,7 @@ activate_open_or_new__generic(Application_Links *app, View_ID view,
     return(result);
 }
 
-CUSTOM_UI_COMMAND_SIG(open_or_new_file)
+CUSTOM_UI_COMMAND_SIG(open_or_new)
 CUSTOM_DOC("Interactively open a file out of the file system.")
 {
     for (;;){
@@ -679,7 +679,7 @@ CUSTOM_DOC("Interactively open a file out of the file system.")
     }
 }
 
-CUSTOM_UI_COMMAND_SIG(new_file)
+CUSTOM_UI_COMMAND_SIG(new_)
 CUSTOM_DOC("Interactively creates a new file.")
 {
     for (;;){
@@ -733,7 +733,7 @@ CUSTOM_DOC("Interactively creates a new file.")
     }
 }
 
-CUSTOM_UI_COMMAND_SIG(open_file)
+CUSTOM_UI_COMMAND_SIG(open)
 CUSTOM_DOC("Interactively opens a file.")
 {
     for (;;){
@@ -785,7 +785,7 @@ CUSTOM_DOC("Interactively saves the current file to another path.")
         View_ID view = get_this_ctx_view(app, Access_Always);
         Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
 
-        File_Name_Result result = get_file_name_from_user(app, scratch, "New:",
+        File_Name_Result result = get_file_name_from_user(app, scratch, "Save as:",
             view);
         if (result.canceled) break;
 

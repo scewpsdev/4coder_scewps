@@ -88,17 +88,17 @@
 		[ ] code peek
 		[X] code index
 	[X] highlight current parens
-	[ ] hex color preview
 	[ ] comment dividers
-	[ ] todo buffer
-	[ ] minimap
-	[ ] relative line numbers
-	[ ] vim mode
+	[ ] column select
+	[X] lister cursor
+	[ ] hex color preview
+	[ ] todo list
+	[ ] jump stack
 	[X] brace highlight height
 	[X] cmd palette capitalization
-	[ ] save as file lister
-	[ ] top buffer margin (half line skip)
-	[ ] open config cmd, open bindings, open current theme
+	[X] save as file lister
+	[X] open config cmd, open bindings, open current theme
+	[X] top buffer margin (half line skip)
 
 
 	Commands:

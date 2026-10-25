@@ -2217,7 +2217,7 @@ CUSTOM_DOC("Advances forward through the undo history in the buffer containing t
 CUSTOM_COMMAND_SIG(open_in_other)
 CUSTOM_DOC("Interactively opens a file in the other panel.")
 {
-    change_active_panel_send_command(app, open_or_new_file);
+    change_active_panel_send_command(app, open_or_new);
 }
 
 CUSTOM_COMMAND_SIG(default_file_externally_modified)

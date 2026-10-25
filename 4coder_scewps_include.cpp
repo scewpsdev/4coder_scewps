@@ -40,8 +40,12 @@
 
 #include "generated/lexer_cpp.cpp"
 
+#define interactive_new new_
+#define interactive_open_or_new open_or_new
 #include "4coder_default_map.cpp"
 #include "4coder_mac_map.cpp"
+#undef interactive_new
+#undef interactive_open_or_new
 
 #include "4coder_default_framework_variables.cpp"
 #include "4coder_default_colors.cpp"

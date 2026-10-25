@@ -5,6 +5,12 @@
 // TOP
 
 function void
+sc_activate_cursor(Application_Links* app) {
+    cursor_blink_state = 2;
+    animate_in_n_milliseconds(app, 0);
+}
+
+function void
 draw_text_layout_default(Application_Links *app, Text_Layout_ID layout_id){
     ARGB_Color special_color = finalize_color(defcolor_special_character, 0);
     ARGB_Color ghost_color = finalize_color(defcolor_ghost_character, 0);
@@ -1034,14 +1040,11 @@ sc_draw_cursor_emacs(Application_Links* app, View_ID view_id, b32 is_active_view
 		if (is_active_view) {
 			next_cursor_rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
 
-            f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
-            next_cursor_rect.y0 -= half_line_skip;
-            next_cursor_rect.y1 += half_line_skip;
             next_cursor_rect.x1 = Min(next_cursor_rect.x1, next_cursor_rect.x0 + metrics.max_advance);
 
-            f32 distance = Max(abs_f32(next_cursor_rect.x0 - current_cursor_rect.x0), abs_f32(next_cursor_rect.y0 - current_cursor_rect.y0));
-            if (distance < metrics.max_advance * 1.5f || distance < metrics.text_height * 1.5f)
-                current_cursor_rect = next_cursor_rect;
+            //f32 distance = Max(abs_f32(next_cursor_rect.x0 - current_cursor_rect.x0), abs_f32(next_cursor_rect.y0 - current_cursor_rect.y0));
+            //if (distance < metrics.max_advance * 1.5f || distance < metrics.text_height * 1.5f)
+            //    current_cursor_rect = next_cursor_rect;
 		}
 
 		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
@@ -1163,6 +1166,102 @@ sc_draw_cursor_notepad(Application_Links* app, View_ID view_id, b32 is_active_vi
 			draw_rectangle_outline(app, rect, roundness, outline_thickness, color);
 		}
 	}
+}
+
+function void
+draw_cursor(Application_Links* app, View_ID view, b32 is_active_view, Buffer_ID buffer, Text_Layout_ID text_layout, Face_Metrics metrics, Rect_f32 prev_clip) {
+    u64 cursor_roundness_100 = def_get_config_u64(app, vars_save_string_lit("cursor_roundness"));
+    f32 cursor_roundness = metrics.normal_advance * cursor_roundness_100 * 0.01f;
+    f32 mark_thickness = (f32)def_get_config_u64(app, vars_save_string_lit("mark_thickness"));
+
+    // NOTE(allen): Cursor
+    switch (fcoder_mode) {
+    case FCoderMode_Original:
+    {
+        Rect_f32 clip = draw_set_clip(app, prev_clip);
+        sc_draw_cursor_emacs(app, view, is_active_view, buffer, text_layout, metrics, cursor_roundness, mark_thickness);
+        draw_set_clip(app, clip);
+    }break;
+    case FCoderMode_NotepadLike:
+    {
+        // remove clipping rect so the cursor doesn't get clipped by the margin
+        // when crossing buffer boundaries
+        Rect_f32 clip = draw_set_clip(app, prev_clip);
+        sc_draw_cursor_notepad(app, view, is_active_view, buffer, text_layout, metrics, cursor_roundness, mark_thickness);
+        draw_set_clip(app, clip);
+    }break;
+    }
+}
+
+function void
+draw_cursor_emacs(Application_Links* app, View_ID view_id,
+    Face_Metrics metrics, Vec2_f32 cursor_pos,
+    f32 roundness, f32 outline_thickness) {
+
+    i32 cursor_sub_id = default_cursor_sub_id();
+
+    Rect_f32 rect = next_cursor_rect;
+    Vec2_f32 size = rect_dim(rect);
+    rect.p0 = cursor_pos;
+    rect.p1 = rect.p0 + size;
+
+    ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
+
+    if (cursor_blink_state) {
+        draw_rectangle(app, rect, roundness, color);
+    }
+}
+
+function void
+draw_cursor_notepad(Application_Links* app, View_ID view_id,
+    Face_Metrics metrics, Vec2_f32 cursor_pos,
+    f32 roundness, f32 outline_thickness) {
+
+    i32 cursor_sub_id = default_cursor_sub_id();
+
+    Rect_f32 rect = next_cursor_rect;
+    Vec2_f32 size = rect_dim(rect);
+    rect.p0 = cursor_pos;
+    rect.p1 = rect.p0 + size;
+
+    ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
+
+    b32 notepad_cursor_block = def_get_config_b32(vars_save_string_lit("cursor_notepad_block"));
+
+    if (cursor_blink_state) {
+        if (!notepad_cursor_block) {
+            rect.x1 = rect.x0 + 2;
+        }
+        f32 half_line_skip = f32_ceil32(metrics.line_skip / 2);
+        rect.y0 -= half_line_skip;
+        rect.y1 += half_line_skip;
+        draw_rectangle(app, rect, roundness, color);
+    }
+}
+
+function void
+draw_cursor(Application_Links* app, View_ID view, Face_Metrics metrics, Vec2_f32 cursor_pos, Rect_f32 prev_clip) {
+    u64 cursor_roundness_100 = def_get_config_u64(app, vars_save_string_lit("cursor_roundness"));
+    f32 cursor_roundness = metrics.normal_advance * cursor_roundness_100 * 0.01f;
+    f32 mark_thickness = (f32)def_get_config_u64(app, vars_save_string_lit("mark_thickness"));
+
+    // NOTE(allen): Cursor
+    switch (fcoder_mode) {
+    case FCoderMode_Original:
+    {
+        Rect_f32 clip = draw_set_clip(app, prev_clip);
+        draw_cursor_emacs(app, view, metrics, cursor_pos, cursor_roundness, mark_thickness);
+        draw_set_clip(app, clip);
+    }break;
+    case FCoderMode_NotepadLike:
+    {
+        // remove clipping rect so the cursor doesn't get clipped by the margin
+        // when crossing buffer boundaries
+        Rect_f32 clip = draw_set_clip(app, prev_clip);
+        draw_cursor_notepad(app, view, metrics, cursor_pos, cursor_roundness, mark_thickness);
+        draw_set_clip(app, clip);
+    }break;
+    }
 }
 
 function void
