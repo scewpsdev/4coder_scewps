@@ -83,18 +83,31 @@ function i64
 boundary_alpha_numeric_underscore_camel_not_newline(Application_Links* app, Buffer_ID buffer, Scan_Direction direction, i64 pos) {
 	if (direction == Scan_Forward) {
 		b32 last_lowercase = false;
+		b32 last_underscore = false;
 		u8 c;
-		while (is_alpha_numeric_underscore_not_newline(c = buffer_get_char(app, buffer, pos)) && !is_newline(c) && (!last_lowercase || !character_is_upper(c))) {
+		while (is_alpha_numeric_underscore_not_newline(c = buffer_get_char(app, buffer, pos)) && !is_newline(c) && (!last_lowercase || !character_is_upper(c)) && !last_underscore) {
 			pos++;
 			if (character_is_lower(c))
 				last_lowercase = true;
+			else if (c == '_')
+				last_underscore = true;
 		}
 	} else {
 		u8 c;
+		b32 last_lowercase = false;
+		b32 last_not_underscore = false;
 		while (is_alpha_numeric_underscore_not_newline(c = buffer_get_char(app, buffer, pos - 1)) && !is_newline(c)) {
 			pos--;
-			if (character_is_upper(c))
+			if (character_is_lower(c))
+				last_lowercase = true;
+			else if (character_is_upper(c) && last_lowercase)
 				break;
+			else if (c == '_' && last_not_underscore) {
+				pos++;
+				break;
+			}
+			if (c != '_')
+				last_not_underscore = true;
 		}
 	}
 	return pos;

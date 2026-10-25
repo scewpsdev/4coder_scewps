@@ -88,10 +88,10 @@
 		[ ] code peek
 		[X] code index
 	[X] highlight current parens
+	[X] lister cursor
+	[X] hex color preview
 	[ ] comment dividers
 	[ ] column select
-	[X] lister cursor
-	[ ] hex color preview
 	[ ] todo list
 	[ ] jump stack
 	[X] brace highlight height
@@ -116,7 +116,7 @@
 	- u64 lister_item_height
 	- u64 lister_width
 	- u64 lister_height
-	- u64 lister_panel_roundness
+	- u64 lister_roundness
 	- u64 lister_item_roundness
 	- u64 lister_margin
 	- u64 lister_inner_margin

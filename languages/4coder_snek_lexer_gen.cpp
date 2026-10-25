@@ -216,7 +216,7 @@ build_language_model(void)
     sm_key("Cast");
     sm_key("Ref");
     
-    sm_select_base_kind(TokenBaseKind_Keyword);
+    sm_select_base_kind(TokenBaseKind_LiteralBool);
     sm_key("LiteralTrue", "true");
     sm_key("LiteralFalse", "false");
     

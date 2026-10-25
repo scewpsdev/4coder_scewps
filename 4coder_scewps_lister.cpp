@@ -61,7 +61,7 @@ sc_lister_render(Application_Links* app, Frame_Info frame_info, View_ID view) {
 	region.y0 += margin_y;
 	region.y1 -= margin_y;
 
-	f32 roundness = (f32)def_get_config_u64(app, vars_save_string_lit("lister_panel_roundness"), 8);
+	f32 roundness = (f32)def_get_config_u64(app, vars_save_string_lit("lister_roundness"), 8);
 
 	ARGB_Color margin_color = fcolor_resolve(get_panel_margin_color(is_active_view ? UIHighlight_Active : UIHighlight_None));
 	ARGB_Color back_color = fcolor_resolve(fcolor_id(defcolor_back, 0));

@@ -206,6 +206,7 @@ F4_GetColor(Application_Links *app, ColorCtx ctx)
             case TokenBaseKind_LiteralString:    { FillFromFlag(F4_SyntaxFlag_Literals); color = F4_ARGBFromID(table, defcolor_str_constant); } break;
             case TokenBaseKind_LiteralInteger:   { FillFromFlag(F4_SyntaxFlag_Literals); color = F4_ARGBFromID(table, defcolor_int_constant); } break;
             case TokenBaseKind_LiteralFloat:     { FillFromFlag(F4_SyntaxFlag_Literals); color = F4_ARGBFromID(table, defcolor_float_constant); } break;
+            case TokenBaseKind_LiteralBool:      { FillFromFlag(F4_SyntaxFlag_Literals); color = F4_ARGBFromID(table, defcolor_bool_constant); } break;
             case TokenBaseKind_Operator:         { FillFromFlag(F4_SyntaxFlag_Operators); color = F4_ARGBFromID(table, fleury_color_operators); if(!F4_ARGBIsValid(color)) { color = default_color; } } break;
             
             case TokenBaseKind_ScopeOpen:

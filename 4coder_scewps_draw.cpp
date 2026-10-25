@@ -411,78 +411,95 @@ draw_query_bar(Application_Links *app, Query_Bar *query_bar, Face_ID face_id, Re
     draw_fancy_line(app, face_id, fcolor_zero(), &list, p);
 }
 
-function void
-draw_line_number_margin(Application_Links *app, View_ID view_id, Buffer_ID buffer, Face_ID face_id, Text_Layout_ID text_layout_id, Rect_f32 margin){
-    ProfileScope(app, "draw line number margin");
-    
-    Scratch_Block scratch(app);
-    FColor line_color = fcolor_id(defcolor_line_numbers_text);
-    
-    Rect_f32 prev_clip = draw_set_clip(app, margin);
-    draw_rectangle_fcolor(app, margin, 0.f, fcolor_id(defcolor_line_numbers_back));
-    
-    Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
+function Rect_f32_Pair
+layout_line_numbers(Application_Links* app, Buffer_ID buffer, Rect_f32 rect, f32 digit_advance) {
     i64 line_count = buffer_get_line_count(app, buffer);
     i64 line_count_digit_count = digit_count_from_integer(line_count, 10);
-    
-    Fancy_String fstring = {};
-    u8 *digit_buffer = push_array(scratch, u8, line_count_digit_count);
-    String_Const_u8 digit_string = SCu8(digit_buffer, line_count_digit_count);
-    for (i32 i = 0; i < line_count_digit_count; i += 1){
-        digit_buffer[i] = ' ';
-    }
-    
-    Buffer_Cursor cursor = view_compute_cursor(app, view_id, seek_pos(visible_range.first));
-    i64 line_number = cursor.line;
-    
-    Buffer_Cursor cursor_opl = view_compute_cursor(app, view_id, seek_pos(visible_range.one_past_last));
-    i64 one_past_last_line_number = cursor_opl.line + 1;
-    
-    u8 *small_digit = digit_buffer + line_count_digit_count - 1;
-    {
-        u8 *ptr = small_digit;
-        if (line_number == 0){
-            *ptr = '0';
-        }
-        else{
-            for (u64 X = line_number; X > 0; X /= 10){
-                *ptr = '0' + (X%10);
-                ptr -= 1;
-            }
-        }
-    }
-    
-    for (;line_number < one_past_last_line_number &&
-         line_number < line_count;){
-        Range_f32 line_y = text_layout_line_on_screen(app, text_layout_id, line_number);
-        Vec2_f32 p = V2f32(margin.x0, line_y.min);
-        
-        fill_fancy_string(&fstring, 0, line_color, 0, 0, digit_string);
-        draw_fancy_string(app, face_id, fcolor_zero(), &fstring, p);
-        
-        line_number += 1;
-        {
-            u8 *ptr = small_digit;
-            for (;;){
-                if (ptr < digit_buffer){
-                    break;
-                }
-                if (*ptr == ' '){
-                    *ptr = '0';
-                }
-                if (*ptr == '9'){
-                    *ptr = '0';
-                    ptr -= 1;
-                }
-                else{
-                    *ptr += 1;
-                    break;
-                }
-            }
-        }
-    }
-    
-    draw_set_clip(app, prev_clip);
+    f32 margin_width = (f32)line_count_digit_count * digit_advance + 5 * digit_advance;
+    return(rect_split_left_right(rect, margin_width));
+}
+
+function void
+draw_line_number_margin(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face_ID face_id, Text_Layout_ID text_layout_id, Rect_f32 margin, f32 digit_advance, f32 file_roundness) {
+    ProfileScope(app, "draw line number margin");
+
+	Scratch_Block scratch(app);
+
+	Rect_f32 prev_clip = draw_set_clip(app, margin);
+	draw_rectangle_fcolor(app, Rf32(margin.p0, V2f32(margin.x1 + file_roundness, margin.y1)), file_roundness, fcolor_id(defcolor_line_numbers_back));
+
+	Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
+	i64 line_count = buffer_get_line_count(app, buffer);
+	i64 line_count_digit_count = digit_count_from_integer(line_count, 10);
+
+	Fancy_String fstring = {};
+	u8* digit_buffer = push_array(scratch, u8, line_count_digit_count);
+	String_Const_u8 digit_string = SCu8(digit_buffer, line_count_digit_count);
+	for (i32 i = 0; i < line_count_digit_count; i += 1) {
+		digit_buffer[i] = ' ';
+	}
+
+	i64 cursor_position = view_get_cursor_pos(app, view_id);
+	Buffer_Cursor cursor = view_compute_cursor(app, view_id, seek_pos(cursor_position));
+
+	Buffer_Cursor range_cursor = view_compute_cursor(app, view_id, seek_pos(visible_range.first));
+	i64 line_number = range_cursor.line;
+
+	Buffer_Cursor cursor_opl = view_compute_cursor(app, view_id, seek_pos(visible_range.one_past_last));
+	i64 one_past_last_line_number = cursor_opl.line + 1;
+
+	u8* small_digit = digit_buffer + line_count_digit_count - 1;
+	{
+		u8* ptr = small_digit;
+		if (line_number == 0) {
+			*ptr = '0';
+		}
+		else {
+			for (u64 X = line_number; X > 0; X /= 10) {
+				*ptr = '0' + (X % 10);
+				ptr -= 1;
+			}
+		}
+	}
+
+	for (; line_number < one_past_last_line_number &&
+		line_number <= line_count;) {
+		Range_f32 line_y = text_layout_line_on_screen(app, text_layout_id, line_number);
+		Vec2_f32 p = V2f32(margin.x0 + 2 * digit_advance, line_y.min);
+
+		FColor line_color = line_number == cursor.line ? fcolor_id(defcolor_line_numbers_highlight) : fcolor_id(defcolor_line_numbers_text);
+
+		fill_fancy_string(&fstring, 0, line_color, 0, 0, digit_string);
+		draw_fancy_string(app, face_id, fcolor_zero(), &fstring, p);
+
+		line_number += 1;
+		{
+			u8* ptr = small_digit;
+			for (;;) {
+				if (ptr < digit_buffer) {
+					break;
+				}
+				if (*ptr == ' ') {
+					*ptr = '0';
+				}
+				if (*ptr == '9') {
+					*ptr = '0';
+					ptr -= 1;
+				}
+				else {
+					*ptr += 1;
+					break;
+				}
+			}
+		}
+	}
+
+	draw_set_clip(app, prev_clip);
+}
+
+function void
+draw_line_number_margin(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face_ID face_id, Text_Layout_ID text_layout_id, Rect_f32 margin) {
+    AssertBreak("sdlkfjalksdjf");
 }
 
 function void
@@ -1027,6 +1044,47 @@ draw_button(Application_Links *app, Rect_f32 rect, Vec2_f32 mouse_p, Face_ID fac
 
 
 function void
+draw_hex_colors(Application_Links* app, View_ID view, Buffer_ID buffer, Text_Layout_ID text_layout_id) {
+    Scratch_Block scratch(app);
+    Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
+    String_Const_u8 buffer_string = push_buffer_range(app, scratch, buffer, visible_range);
+
+    for (i64 i = 0; i < range_size(visible_range); i++) {
+        if (i + 9 >= range_size(visible_range))
+            break;
+
+        u8* str = buffer_string.str + i;
+        if (str[0] != '0' || str[1] != 'x')
+            continue;
+
+        b32 hex_color = true;
+        for (i64 j = 0; j < 8; j++) {
+            u8 c = str[j + 2];
+            if (!(c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f')) {
+                hex_color = false;
+                break;
+            }
+        }
+        if (!hex_color)
+            continue;
+
+        i64 pos = visible_range.min + i;
+        Rect_f32 r0 = text_layout_character_on_screen(app, text_layout_id, pos + 0);
+        Rect_f32 r1 = text_layout_character_on_screen(app, text_layout_id, pos + 9);
+        Rect_f32 rect = rect_union(r0, r1);
+
+        ARGB_Color color = ARGB_Color(string_to_integer(SCu8(str + 2, 8), 16));
+        u32 sum = ((color >> 16) & 0xFF) + ((color >> 8) & 0xFF) + (color & 0xFF);
+        ARGB_Color contrast = ARGB_Color(0xFF000000 | (i32(sum > 330) - 1));
+
+        draw_rectangle(app, rect, 0, color);
+        paint_text_color(app, text_layout_id, Ii64_size(pos, 10), contrast);
+
+        i += 9;
+    }
+}
+
+function void
 sc_draw_cursor_emacs(Application_Links* app, View_ID view_id, b32 is_active_view,
 	Buffer_ID buffer, Text_Layout_ID text_layout_id, Face_Metrics metrics,
 	f32 roundness, f32 outline_thickness) {
@@ -1042,9 +1100,9 @@ sc_draw_cursor_emacs(Application_Links* app, View_ID view_id, b32 is_active_view
 
             next_cursor_rect.x1 = Min(next_cursor_rect.x1, next_cursor_rect.x0 + metrics.max_advance);
 
-            //f32 distance = Max(abs_f32(next_cursor_rect.x0 - current_cursor_rect.x0), abs_f32(next_cursor_rect.y0 - current_cursor_rect.y0));
-            //if (distance < metrics.max_advance * 1.5f || distance < metrics.text_height * 1.5f)
-            //    current_cursor_rect = next_cursor_rect;
+            f32 distance = Max(abs_f32(next_cursor_rect.x0 - current_cursor_rect.x0), abs_f32(next_cursor_rect.y0 - current_cursor_rect.y0));
+            if (distance < metrics.max_advance * 1.5f || distance < metrics.text_height * 1.5f)
+                current_cursor_rect = next_cursor_rect;
 		}
 
 		ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
@@ -1390,6 +1448,49 @@ highlight_hovered_symbol(Application_Links* app, View_ID view, Buffer_ID buffer,
 			}
 		}
 	}
+}
+
+function b32
+compare_color_tables(Color_Table a, Color_Table b) {
+    if (a.count != b.count) {
+        return false;
+    }
+    for (i32 i = 0; i < a.count; i++) {
+        if (a.arrays[i].count != b.arrays[i].count) {
+            return false;
+        }
+        for (i32 j = 0; j < a.arrays[i].count; j++) {
+            if (a.arrays[i].vals[j] != b.arrays[i].vals[j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function Color_Table*
+get_color_table_from_index(Color_Table_List* list, i32 index) {
+    i32 i = 0;
+    for (Color_Table_Node* node = global_theme_list.first; node; node = node->next) {
+        if (i == index) {
+            return &node->table;
+        }
+        i++;
+    }
+    return nullptr;
+}
+
+function i32
+get_theme_index(Color_Table color_table) {
+    i32 i = 0;
+    for (Color_Table_Node* node = global_theme_list.first; node; node = node->next) {
+        // compare themes
+        if (compare_color_tables(node->table, color_table)) {
+            return i;
+        }
+        i++;
+    }
+    return -1;
 }
 
 // BOTTOM

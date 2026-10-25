@@ -224,34 +224,54 @@ get_command_from_user(Application_Links *app, char *query, Command_Lister_Status
 
 ////////////////////////////////
 
+function void
+navigate_theme_lister(Application_Links* app, View_ID view, Lister* lister, i32 delta) {
+    lister__navigate__default(app, view, lister, delta);
+
+    Color_Table* color_table = get_color_table_from_index(&global_theme_list, lister->item_index);
+    if (color_table) {
+        active_color_table = *color_table;
+    }
+}
+
 function Color_Table*
 get_color_table_from_user(Application_Links *app, String_Const_u8 query, Color_Table_List *color_table_list){
-    if (color_table_list == 0){
+    if (color_table_list == 0) {
         color_table_list = &global_theme_list;
     }
-    
+
     Scratch_Block scratch(app);
     Lister_Block lister(app, scratch);
     lister_set_query(lister, query);
-    lister_set_default_handlers(lister);
-    
+
+    Lister_Handlers handlers = lister_get_default_handlers();
+    handlers.navigate = navigate_theme_lister;
+    lister_set_handlers(lister, &handlers);
+
+    i32 prev_theme_index = get_theme_index(next_color_table);
+    lister.lister.current->item_index = prev_theme_index;
+
+    /*
     lister_add_item(lister, string_u8_litexpr("4coder"), string_u8_litexpr(""),
-                    (void*)&default_color_table, 0);
-    
-    for (Color_Table_Node *node = color_table_list->first;
-         node != 0;
-         node = node->next){
+        (void*)&default_color_table, 0);
+    */
+
+    for (Color_Table_Node* node = color_table_list->first;
+        node != 0;
+        node = node->next) {
         lister_add_item(lister, node->name, string_u8_litexpr(""),
-                        (void*)&node->table, 0);
+            (void*)&node->table, 0);
     }
-    
+
     Lister_Result l_result = run_lister(app, lister);
-    
-    Color_Table *result = 0;
-    if (!l_result.canceled){
-        result = (Color_Table*)l_result.user_data;
+
+    if (!l_result.canceled) {
+        return (Color_Table*)l_result.user_data;
+    } else if (prev_theme_index != -1) {
+        return get_color_table_from_index(&global_theme_list, prev_theme_index);
+    } else {
+        return nullptr;
     }
-    return(result);
 }
 
 function Color_Table*
