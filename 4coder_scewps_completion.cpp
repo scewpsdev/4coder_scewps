@@ -545,7 +545,7 @@ F4_PosContext_Render(Application_Links* app, View_ID view, Buffer_ID buffer, Tex
                     needed_size.x += 2 * padding;
                     needed_size.y += metrics.line_height + 2 * padding;
 
-                    Rect_f32 draw_rect = draw_tooltip(app, view_rect, tooltip_position, needed_size, fcolor_id(defcolor_margin_hover), fcolor_id(defcolor_back));
+                    Rect_f32 draw_rect = draw_tooltip(app, view_rect, tooltip_position + V2f32(0, metrics.line_height), needed_size, fcolor_id(defcolor_margin_hover), fcolor_id(defcolor_back));
                     //F4_DrawTooltipRect(app, draw_rect);
 
                     // NOTE(rjf): Render tokens of definition

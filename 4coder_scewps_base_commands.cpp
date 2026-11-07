@@ -1905,6 +1905,11 @@ CUSTOM_DOC("Reopen the current buffer from the hard drive.")
     Buffer_ID buffer = view_get_buffer(app, view, Access_ReadVisible);
     buffer_reopen(app, buffer, 0);
     center_view(app);
+
+    // undo no_mark_snap_to_cursor from center_view()
+    Managed_Scope scope = view_get_managed_scope(app, view);
+    b32* snap_to_cursor = scope_attachment(app, scope, view_snap_mark_to_cursor, b32);
+    *snap_to_cursor = true;
 }
 
 ////////////////////////////////

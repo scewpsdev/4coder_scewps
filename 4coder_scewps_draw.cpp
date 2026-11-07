@@ -959,7 +959,7 @@ get_contained_box_near_point(Rect_f32 container, Vec2_f32 p, Vec2_f32 box_dims){
     Vec2_f32 container_dims = rect_dim(container);
     box_dims.x = clamp_top(box_dims.x, container_dims.x);
     box_dims.y = clamp_top(box_dims.y, container_dims.y);
-    Vec2_f32 q = p + V2f32(-20.f, 22.f);
+    Vec2_f32 q = p; // + V2f32(-20.f, 22.f);
     if (q.x + box_dims.x > container.x1){
         q.x = container.x1 - box_dims.x;
     }

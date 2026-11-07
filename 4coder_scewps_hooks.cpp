@@ -682,7 +682,9 @@ draw_error_annotations(Application_Links* app, View_ID view, Buffer_ID buffer, T
 
 	i64 last_error_line = -1;
 	for (i32 i = 0; i < marker_count; i++) {
-		i64 error_line = get_line_from_list(app, jump_state.list, i);
+		// get error line from buffer-local marker index. original function expects global jump index
+		i64 error_line = get_line_from_list_for_buffer(app, jump_state.list, buffer, i);
+
 		i64 line_number = get_line_number_from_pos(app, buffer, markers[i].pos);
 
 		i64 token_index = token_index_from_pos(token_array, markers[i].pos);
@@ -929,7 +931,7 @@ sc_draw_file_bar(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face
 	draw_rectangle_fcolor(app, bar, 0.f, fcolor_id(defcolor_bar));
 
 	FColor base_color = fcolor_id(defcolor_base);
-	FColor pop2_color = fcolor_id(defcolor_pop2);
+	FColor pop2_color = fcolor_id(defcolor_warning);
 
 	i64 cursor_position = view_get_cursor_pos(app, view_id);
 	Buffer_Cursor cursor = view_compute_cursor(app, view_id, seek_pos(cursor_position));
@@ -957,6 +959,10 @@ sc_draw_file_bar(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face
 	draw_fancy_line(app, face_id, fcolor_zero(), &list, p);
 
 	list = {};
+
+	if (global_keyboard_macro_is_recording) {
+		push_fancy_stringf(scratch, &list, pop2_color, "recording macro...   ");
+	}
 
 	push_fancy_stringf(scratch, &list, base_color, "Line %lld, Col %lld   ", cursor.line, cursor.col);
 

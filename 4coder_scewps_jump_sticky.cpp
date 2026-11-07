@@ -304,6 +304,27 @@ get_line_from_list(Application_Links *app, Marker_List *list, i32 index){
     return(result);
 }
 
+internal i64
+get_line_from_list_for_buffer(Application_Links* app, Marker_List* list, Buffer_ID buffer, i32 index) {
+    if (list != 0) {
+        i32 j = 0;
+        for (i32 i = 0; i < list->jump_count; i++) {
+            Sticky_Jump_Stored stored = {};
+            if (get_stored_jump_from_list(app, list, i, &stored)) {
+                if (stored.jump_buffer_id == buffer) {
+                    if (j == index) {
+                        return stored.list_line;
+                    } else {
+                        j++;
+                    }
+                }
+            }
+        }
+        
+    }
+    return 0;
+}
+
 internal b32
 get_is_sub_error_from_list(Application_Links *app, Marker_List *list, i32 index){
     b32 result = false;
