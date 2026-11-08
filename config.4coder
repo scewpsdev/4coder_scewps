@@ -101,7 +101,7 @@ lister_item_roundness = 0;
 interpolate_cursor = true;
 cursor_notepad_block = false;
 
-//enable_symbol_completion = true;
+enable_symbol_completion = true;
 f4_poscontext_draw_at_bottom_of_buffer = true;
 
 
