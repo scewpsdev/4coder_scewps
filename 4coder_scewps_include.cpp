@@ -60,7 +60,6 @@
 #include "4coder_fancy.cpp"
 #include "4coder_scewps_draw.cpp"
 #include "4coder_font_helper.cpp"
-#include "4coder_config.cpp"
 #include "4coder_scewps_config.cpp"
 #include "4coder_dynamic_bindings.cpp"
 #include "4coder_scewps_default_framework.cpp"

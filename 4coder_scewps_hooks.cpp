@@ -925,7 +925,7 @@ render_buffer(Application_Links* app, View_ID view_id, Face_ID face_id,
 }
 
 function void
-sc_draw_file_bar(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face_ID face_id, Rect_f32 bar) {
+sc_draw_file_bar(Application_Links* app, View_ID view_id, b32 is_active_view, Buffer_ID buffer, Face_ID face_id, Rect_f32 bar) {
 	Scratch_Block scratch(app);
 
 	draw_rectangle_fcolor(app, bar, 0.f, fcolor_id(defcolor_bar));
@@ -960,7 +960,7 @@ sc_draw_file_bar(Application_Links* app, View_ID view_id, Buffer_ID buffer, Face
 
 	list = {};
 
-	if (global_keyboard_macro_is_recording) {
+	if (global_keyboard_macro_is_recording && is_active_view) {
 		push_fancy_stringf(scratch, &list, pop2_color, "recording macro...   ");
 	}
 
@@ -1035,7 +1035,7 @@ sc_render(Application_Links* app, Frame_Info frame_info, View_ID view_id) {
 	if (view_get_setting(app, view_id, ViewSetting_ShowFileBar, &showing_file_bar) && showing_file_bar) {
 		Rect_f32_Pair pair = layout_file_bar_on_bot(region, f32_round32(line_height * 1.25f));
 		Face_ID file_bar_font = ui_font ? ui_font : face_id;
-		sc_draw_file_bar(app, view_id, buffer, file_bar_font, pair.max);
+		sc_draw_file_bar(app, view_id, is_active_view, buffer, file_bar_font, pair.max);
 		region = pair.min;
 	}
 

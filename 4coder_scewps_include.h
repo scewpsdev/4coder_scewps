@@ -19,7 +19,7 @@
 #include "4coder_version.h"
 #include "4coder_table.h"
 #include "4coder_events.h"
-#include "4coder_types.h"
+#include "4coder_scewps_types.h"
 #include "4coder_doc_content_types.h"
 #include "4coder_default_colors.h"
 #define DYNAMIC_LINK_API

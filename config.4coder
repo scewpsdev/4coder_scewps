@@ -67,9 +67,10 @@ default_theme_name = "theme-vs";
 //  1bit - mono-chrome 0/1 opacity channel per pixel
 //default_font_name = "GoogleSansCode-Medium.ttf";
 default_font_name = "C:\Windows\Fonts\consola.ttf";
-default_font_size = 15;
+default_font_size = 11;
 default_font_hinting = true;
 default_font_aa_mode = "lcd";
+default_font_dpi = 96;
 
 // User
 user_name = "not-set";
@@ -100,7 +101,7 @@ lister_item_roundness = 0;
 interpolate_cursor = true;
 cursor_notepad_block = false;
 
-enable_symbol_completion = true;
+//enable_symbol_completion = true;
 f4_poscontext_draw_at_bottom_of_buffer = true;
 
 
